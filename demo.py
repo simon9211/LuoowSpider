@@ -33,16 +33,13 @@ USER_AGENT = [
 
 def get_home_page():
     jd_url = 'http://www.luoow.com/'
-    # # response = requests.get(jd_url1)
-    # response = requests.get(jd_url, headers={'User-Agent': USER_AGENT[1]})
-    # print(response.text)
-    # ids = re.findall('data-pid="(.*?)"', response.text, re.S)
-    # print(ids)
-
+    # response = requests.get(jd_url1)
+    res = requests.get(jd_url, headers={'User-Agent': USER_AGENT[1]})
+    # print(res.text)
     html = urlopen(jd_url)
-    bsObj = BeautifulSoup(html, 'html5lib')
-    print(bsObj)
+    bsObj = BeautifulSoup(res.text, 'html5lib')
     # 根据css样式表查找
+    print(bsObj)
     vol_List = bsObj.findAll("span", {"class": "label"})
     for vol in vol_List:
         print(vol.get_text())
