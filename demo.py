@@ -1,7 +1,13 @@
 # -*- coding:utf-8 -*-
 import re
 import threading
+
 import urllib.request
+
+import random
+from random import choice
+from time import sleep
+
 from urllib.request import urlopen
 
 import pymongo
@@ -47,13 +53,14 @@ USER_AGENT = [
 
 def get_home_page():
     jd_url = 'http://www.luoow.com/'
+    # jd_url = 'http://www.luoow.com/701_800.html'
     # response = requests.get(jd_url1)
     res = requests.get(jd_url, headers={'User-Agent': USER_AGENT[1]})
     # print(res.text)
-    html = urlopen(jd_url)
+    # html = urlopen(jd_url)
     bsObj = BeautifulSoup(res.text, 'html5lib')
     # 根据css样式表查找
-    # print(bsObj)
+    print(bsObj)
     vols = []
     vol_List = bsObj.findAll("span", {"class": "label"})
     for vol in vol_List:
@@ -62,6 +69,8 @@ def get_home_page():
 
     t_vols = threading.Thread(target=save_vols_mongo, args=(vols,))
     t_vols.start()
+
+    get_vol(vols)
 
     tags = []
     tagList = bsObj.findAll("a", {"class": "item"})
@@ -72,39 +81,67 @@ def get_home_page():
     t_tags = threading.Thread(target=save_tags_mongo, args=(tags,))
     t_tags.start()
 
-    colList = bsObj.findAll("div", {"class": "thumbnail theborder"})
 
-    cols = []
-    for col in colList:
-        # print(col)
-        item = {}
-        a = col.findAll('a')
-        item['title'] = a[1].get_text()
-        item['href'] = a[1].get('href')
-        img = col.find('img')
-        item['src'] = img.get('src')
-        cols.append(item)
-    t_cols = threading.Thread(target=save_cols_mongo, args=(cols,))
-    t_cols.start()
-    print(cols)
+    # colList = bsObj.findAll("div", {"class": "thumbnail theborder"})
+    # cols = []
+    # for col in colList:
+    #     # print(col)
+    #     item = {}
+    #     a = col.findAll('a')
+    #     item['title'] = a[1].get_text()
+    #     item['href'] = a[1].get('href')
+    #     img = col.find('img')
+    #     item['src'] = img.get('src')
+    #     cols.append(item)
+    # t_cols = threading.Thread(target=save_cols_mongo, args=(cols,))
+    # t_cols.start()
+    # print(cols)
 
-    # head = {'User-Agent': USER_AGENT[2]}
-    # request = urllib.request.Request(headers=head, url=jd_url)
-    #
-    # try:
-    #     response = urllib.request.urlopen(request)
-    #     print(response.read())
-    #     #return response.read() if raw else BeautifulSoup(response.read(), 'html5lib')
-    #
-    # except urllib.error.URLError or urllib.error.HTTPError as e:
-    #     print(e)
+# 创建一个线程锁
+lock = threading.Lock()
+
+def get_vol(vols):
+    # for i in range(0, 4):
+    #     t = threading.Thread(target=get_vol_items, args=(vols,))
+    #     # 启动线程
+    #     t.start()
+    get_vol_items(vols)
+
+def get_vol_items(vols):
+    while vols:
+        # 加锁
+        lock.acquire()
+        # 取出第一个元素
+        vol = vols[0]
+        # 将取出的元素从列表中删除，避免重复加载
+        del vols[0]
+        # 释放锁
+        lock.release()
+
+        url = 'http://www.luoow.com'
+        tp = ''
+        if vol == '音乐电台':
+            tp = '/r/'
+        elif vol == '其他':
+            tp = '/e/'
+        else:
+            tp = '/' + vol[4:].replace('-', '_') + '.html'
+        # response = requests.get(jd_url1)
+        url += tp
+        res = requests.get(url + tp, headers={'User-Agent': USER_AGENT[random.randint(0, 10)]})
+        print(url)
+        # print(res.text)
+        bsObj = BeautifulSoup(res.text, 'html5lib')
+        print(bsObj)
+        sleep(3)
+
+
 
 #  保存mongo
 def save_vols_mongo(vols):
     for i in range(0, int(len(vols) / 2)):
         # 插入mongo
-        vol_db.insert({'vol': vols[i], "_id": i}, )
-
+        vol_db.save({'vol': vols[i], "_id": i}, )
 
 def save_tags_mongo(tags):
     for tag in tags:
@@ -115,28 +152,7 @@ def save_cols_mongo(cols):
     for col in cols:
         col_db.insert(col)
 
-def get_vol(page):
-    def tag_data_to_tag(each):
-        return each and each.get_text()
 
-    # 获得 Vol 信息
-    print(page)
-    # <a href="http://news.baidu.com" target="_blank" class="mnav">新闻</a>
-    name = page.find({'a'}, {'href': 'http://news.baidu.com'}).get_text()
-    print(name)
-    # title = page.find({'span'}, {'class': 'vol-title'}).get_text()
-    # vol = int(page.find({'span'}, {'class': 'vol-number rounded'}).get_text())
-    # cover = page.find({'img'}, {'class': 'vol-cover'}).attrs['src']
-    # description = page.find({'div'}, {'class': 'vol-desc'}).get_text().replace('\n', '<br>')
-    # date = page.find({'span'}, {'class': 'vol-date'}).get_text()
-    # tags_data = page.findAll({'a'}, {'class': 'vol-tag-item'})
-    # tag = map(tag_data_to_tag, tags_data)
-    # color = lib.get_average_color(cover)
 
-    # 获得 Track 信息
-    # list_data = page.findAll({'li'}, {'class': 'track-item rounded'})
-    # length = len(list_data)
-
-    # 如果 Vol 已存在但任务未完成, 删除该 Vol 的所有 Track并删除该 Vol
 
 get_home_page()
