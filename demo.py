@@ -1,13 +1,27 @@
 # -*- coding:utf-8 -*-
 import re
+import threading
 import urllib.request
 from urllib.request import urlopen
 
+import pymongo
 import requests
 from bs4 import BeautifulSoup
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
+# 数据库
+
+db = client.luoow
+# vol表,没有自动创建
+vol_db = db.vols
+tag_db = db.tags
+col_db = db.cols
+
+
+dblist = client.list_database_names()
 
 print('simon')
 
@@ -39,14 +53,24 @@ def get_home_page():
     html = urlopen(jd_url)
     bsObj = BeautifulSoup(res.text, 'html5lib')
     # 根据css样式表查找
-    print(bsObj)
+    # print(bsObj)
+    vols = []
     vol_List = bsObj.findAll("span", {"class": "label"})
     for vol in vol_List:
         print(vol.get_text())
+        vols.append(vol.get_text())
 
+    t_vols = threading.Thread(target=save_vols_mongo, args=(vols,))
+    t_vols.start()
+
+    tags = []
     tagList = bsObj.findAll("a", {"class": "item"})
     for tag in tagList:
         print(tag.get_text())
+        tags.append(tag.get_text())
+
+    t_tags = threading.Thread(target=save_tags_mongo, args=(tags,))
+    t_tags.start()
 
     colList = bsObj.findAll("div", {"class": "thumbnail theborder"})
 
@@ -58,9 +82,10 @@ def get_home_page():
         item['title'] = a[1].get_text()
         item['href'] = a[1].get('href')
         img = col.find('img')
-
+        item['src'] = img.get('src')
         cols.append(item)
-
+    t_cols = threading.Thread(target=save_cols_mongo, args=(cols,))
+    t_cols.start()
     print(cols)
 
     # head = {'User-Agent': USER_AGENT[2]}
@@ -74,20 +99,21 @@ def get_home_page():
     # except urllib.error.URLError or urllib.error.HTTPError as e:
     #     print(e)
 
+#  保存mongo
+def save_vols_mongo(vols):
+    for i in range(0, int(len(vols) / 2)):
+        # 插入mongo
+        vol_db.insert({'vol': vols[i], "_id": i}, )
 
-def get_page():
-    head = {'User-Agent': USER_AGENT[0]}
-    request = urllib.request.Request(headers=head, url="https://www.baidu.com/")
 
-    try:
-        response = urllib.request.urlopen(request)
-        # response.read() if True else BeautifulSoup(response.read(), 'html5lib')
-    except urllib.error.URLError or urllib.error.HTTPError as e:
-        print('Load Page Failed. Retry %ss later' % (str(100)))
-        print(e)
-    # print(BeautifulSoup(response.read(), 'html5lib'))
-    return BeautifulSoup(response.read(), 'html.parser')
+def save_tags_mongo(tags):
+    for tag in tags:
+        # 插入mongo
+        tag_db.insert({'tag': tag})
 
+def save_cols_mongo(cols):
+    for col in cols:
+        col_db.insert(col)
 
 def get_vol(page):
     def tag_data_to_tag(each):
