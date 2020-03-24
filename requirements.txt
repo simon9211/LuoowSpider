@@ -1,0 +1,6 @@
+pylab
+pymongo
+requests
+beautifulsoup4==4.6.0
+html5lib==0.999999999
+webencodings==0.5.1
