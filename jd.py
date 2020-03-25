@@ -59,18 +59,18 @@ color_arrs = ['bisque', 'black', 'purple', 'pink', 'blue', 'white', 'gray', 'per
 # plt.legend()
 # plt.show()
 
-index = ["A", "B", "C", "D"]
-
-value = []
-for i in index:
-    num = product_db.count({'product_size': i})
-    value.append(num)
-
-# plt.bar(len(index), left=0, height=value, color="green", width=0.5)
-xlocation = np.linspace(5, len(value) * 0.6, len(value))
-plt.bar(xlocation, height=value, color="green", width=0.5)
-plt.xticks(xlocation, index, fontsize=12, rotation=20)
-plt.show()
+# index = ["A", "B", "C", "D"]
+#
+# value = []
+# for i in index:
+#     num = product_db.count({'product_size': i})
+#     value.append(num)
+#
+# # plt.bar(len(index), left=0, height=value, color="green", width=0.5)
+# xlocation = np.linspace(5, len(value) * 0.6, len(value))
+# plt.bar(xlocation, height=value, color="green", width=0.5)
+# plt.xticks(xlocation, index, fontsize=12, rotation=20)
+# plt.show()
 
 
 #  保存mongo
@@ -211,13 +211,13 @@ def spider_jd(ids):
         # 获取评论内容
         get_comment_message(id)
 
-# product_ids = find_product_id('胸罩') #['8663878']
-#
-# for i in (0, 6):
-#     # 增加一个获取评论的线程
-#     t = threading.Thread(target=spider_jd, args=(product_ids,))
-#     # 启动线程
-#     t.start()
+product_ids = find_product_id('内衣') #['8663878']
+
+for i in (0, 6):
+    # 增加一个获取评论的线程
+    t = threading.Thread(target=spider_jd, args=(product_ids,))
+    # 启动线程
+    t.start()
 
 # spider_jd(product_ids)
 # get_comment_message(product_ids[i])

@@ -52,7 +52,8 @@ USER_AGENT = [
 
 
 def get_home_page():
-    jd_url = 'http://www.luoow.com/'
+    # jd_url = 'http://www.luoow.com/'
+    jd_url = 'http://www.luoow.com/101_200.html'
     # jd_url = 'http://www.luoow.com/701_800.html'
     # response = requests.get(jd_url1)
     res = requests.get(jd_url, headers={'User-Agent': USER_AGENT[1]})
@@ -70,14 +71,14 @@ def get_home_page():
     t_vols = threading.Thread(target=save_vols_mongo, args=(vols,))
     t_vols.start()
 
-    get_vol(vols)
+    t_vols1 = threading.Thread(target=get_vol, args=(vols,))
+    t_vols1.start()
 
     tags = []
     tagList = bsObj.findAll("a", {"class": "item"})
     for tag in tagList:
         print(tag.get_text())
         tags.append(tag.get_text())
-
     t_tags = threading.Thread(target=save_tags_mongo, args=(tags,))
     t_tags.start()
 
@@ -101,11 +102,11 @@ def get_home_page():
 lock = threading.Lock()
 
 def get_vol(vols):
-    # for i in range(0, 4):
-    #     t = threading.Thread(target=get_vol_items, args=(vols,))
-    #     # 启动线程
-    #     t.start()
-    get_vol_items(vols)
+    for i in range(0, 4):
+        t = threading.Thread(target=get_vol_items, args=(vols,))
+        # 启动线程
+        t.start()
+    # get_vol_items(vols)
 
 def get_vol_items(vols):
     while vols:
@@ -126,15 +127,29 @@ def get_vol_items(vols):
             tp = '/e/'
         else:
             tp = '/' + vol[4:].replace('-', '_') + '.html'
-        # response = requests.get(jd_url1)
+
         url += tp
-        res = requests.get(url + tp, headers={'User-Agent': USER_AGENT[random.randint(0, 10)]})
+        idx = random.randint(0, 10)
+        res = requests.get(url, headers={'User-Agent': USER_AGENT[idx]})
         print(url)
         # print(res.text)
         bsObj = BeautifulSoup(res.text, 'html5lib')
         print(bsObj)
-        sleep(3)
-
+        # sleep(3)
+        colList = bsObj.findAll("div", {"class": "thumbnail theborder"})
+        cols = []
+        for col in colList:
+            # print(col)
+            item = {}
+            a = col.findAll('a')
+            item['title'] = a[1].get_text()
+            item['href'] = a[1].get('href')
+            img = col.find('img')
+            item['src'] = img.get('src')
+            cols.append(item)
+        t_cols = threading.Thread(target=save_cols_mongo, args=(cols,))
+        t_cols.start()
+        print(cols)
 
 
 #  保存mongo
