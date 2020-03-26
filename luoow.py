@@ -10,22 +10,22 @@ import pymongo
 import ssl
 
 # import db
-# from db import db
-import lib
+from spiders import db
+from spiders import lib
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
+# client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
 # 数据库
 
-database = client.luoow
+# database = client.luoow
 # vol表,没有自动创建
-vol_db = database.vols
-tag_db = database.tags
+# vol_db = database.vols
+# tag_db = database.tags
 # col_db = db.col
 
 
-dblist = client.list_database_names()
+# dblist = client.list_database_names()
 
 print('simon')
 
@@ -33,25 +33,25 @@ def get_home_page():
     url = 'http://www.luoow.com/'
     bsObj = lib.load_page(url)
     # 根据css样式表查找
-    print(bsObj)
-    vols = []
-    vol_List = bsObj.findAll("span", {"class": "label"})
-    for vol in vol_List:
+    # print(bsObj)
+    periods = []
+    vol_list = bsObj.findAll("span", {"class": "label"})
+    for vol in vol_list:
         print(vol.get_text())
-        vols.append(vol.get_text())
+        periods.append(vol.get_text())
 
-    t_vols = threading.Thread(target=save_vols_mongo, args=(vols,))
+    t_vols = threading.Thread(target=save_periods_mongo, args=(periods,))
     t_vols.start()
 
-    t_vols1 = threading.Thread(target=get_vol, args=(vols,))
+    t_vols1 = threading.Thread(target=get_vol, args=(periods,))
     t_vols1.start()
 
-    tags = []
+    labels = []
     tagList = bsObj.findAll("a", {"class": "item"})
     for tag in tagList:
         print(tag.get_text())
-        tags.append(tag.get_text())
-    t_tags = threading.Thread(target=save_tags_mongo, args=(tags,))
+        labels.append(tag.get_text())
+    t_tags = threading.Thread(target=save_labels_mongo, args=(labels,))
     t_tags.start()
 
 
@@ -91,7 +91,7 @@ def get_vol_items(vols):
         idx = random.randint(0, 10)
 
         bsObj = lib.load_page(url)
-        print(bsObj)
+        # print(bsObj)
         # sleep(3)
         colList = bsObj.findAll("div", {"class": "thumbnail theborder"})
         cols = []
@@ -110,28 +110,40 @@ def get_vol_items(vols):
 
 
 #  保存mongo
-def save_vols_mongo(vols):
-    for i in range(0, int(len(vols) / 2)):
+def save_periods_mongo(periods):
+    for i in range(0, int(len(periods) / 2)):
         # 插入mongo
-        vol_db.save({'vol': vols[i], "_id": i}, )
+        # vol_db.save({'vol': vols[i], "_id": i}, )
+        new_period = db.add_period(period_name=periods[i])
+        if new_period:
+            # 插入成功
+            print('new_period 插入成功')
+        else:
+            print('------------ label %s: Add Failed! ----------' % periods[i])
 
 
-def save_tags_mongo(tags):
-    for tag in tags:
+def save_labels_mongo(labels):
+    for label in labels:
         # 插入mongo
-        tag_db.insert({'tag': tag})
+        # tag_db.insert({'tag': tag})
+        new_label = db.add_label(label_name=label)
+        if new_label:
+            # 插入成功
+            print('new_label 插入成功')
+        # else:
+        #     print('------------ label %s: Add Failed! ----------' % label)
 
 
 def save_cols_mongo(cols):
     for col in cols:
-        col['_id'] = hash(col['title'])
+        # col['_id'] = hash(col['title'])
         # col_db.save(col)
-        # new_col = db.add_col(title=col['title'], href=col['href'], cover=col['cover'])
-        # if new_col:
-        #     # 插入成功
-        #     print('col 插入成功')
+        new_col = db.add_col(title=col['title'], href=col['href'], cover=col['cover'])
+        if new_col:
+            # 插入成功
+            print('col 插入成功')
         # else:
-        #     print('------------ Vol%s: Add Failed! ----------' % col)
+            # print('------------ col %s: Add Failed! ----------' % col)
 
 
 
@@ -139,7 +151,8 @@ def save_cols_mongo(cols):
 
 
 
-# get_home_page()
+get_home_page()
+
 
 def get_vol_detail():
     url = 'http://www.luoow.com/999/'
@@ -148,4 +161,4 @@ def get_vol_detail():
     print(bsObj)
 
 
-get_vol_detail()
+# get_vol_detail()

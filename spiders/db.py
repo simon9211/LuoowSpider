@@ -4,18 +4,18 @@ import mongoengine as db
 db.connect('luoow')
 
 
-class Task(db.document):
-    def __init__(self):
-        super(Task, self).__init__()
+# class Task(db.document):
+#     def __init__(self):
+#         super(Task, self).__init__()
+#
+#     done = db.BooleanField(default=False)
+#     vol = db.IntField(required=True, unique=True)
+#     url = db.StringField(required=True)
 
-    done = db.BooleanField(default=False)
-    vol = db.IntField(required=True, unique=True)
-    url = db.StringField(required=True)
 
-
-class Track(db.document):
-    def __init__(self):
-        super(Track, self).__init__()
+class Track(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Track, self).__init__(*args, **kwargs)
 
     track_id = db.IntField(required=True)
     vol = db.IntField(required=True)
@@ -29,9 +29,9 @@ class Track(db.document):
     color = db.ListField(required=True)
 
 
-class Vol(db.document):
-    def __init__(self):
-        super(Vol, self).__init__()
+class Vol(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Vol, self).__init__(*args, **kwargs)
 
     vol_id = db.IntField(required=True)
     title = db.StringField(required=True)
@@ -44,7 +44,7 @@ class Vol(db.document):
     color = db.ListField(required=True)
 
 
-class Single(db.document):
+class Single(db.Document):
     def __init__(self):
         super(Single, self).__init__()
 
@@ -60,13 +60,60 @@ class Single(db.document):
     color = db.ListField(required=True)
 
 
-class Log(db.document):
+class Log(db.Document):
     def __init__(self):
         super(Log, self).__init__()
 
     date = db.DateTimeField(required=True)
     ip = db.StringField(required=True)
     api = db.StringField(required=True)
+
+
+class Period(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Period, self).__init__(*args, **kwargs)
+
+    period_name = db.StringField(required=True, unique=True)
+
+
+def add_period(period_name):
+    if Period.objects(period_name=period_name).__len__() == 0:
+        new_period = Period(period_name=period_name)
+        new_period.save()
+        return True
+    return False
+
+
+class Label(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Label, self).__init__(*args, **kwargs)
+
+    label_name = db.StringField(required=True, unique=True)
+
+
+def add_label(label_name):
+    if Label.objects(label_name=label_name).__len__() == 0:
+        new_label = Label(label_name=label_name)
+        new_label.save()
+        return True
+    return False
+
+
+class Col(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Col, self).__init__(*args, **kwargs)
+
+    title = db.StringField(required=True, unique=True)
+    href = db.StringField(required=True, unique=True)
+    cover = db.StringField(required=True, unique=True)
+
+
+def add_col(title, href, cover):
+    if Col.objects(title=title).__len__() == 0:
+        new_col = Col(title=title, href=href, cover=cover)
+        new_col.save()
+        return True
+    return False
 
 
 def add_vol(id, title, vol, cover, description, date, length, tag, color):
@@ -108,15 +155,15 @@ def add_track(id, vol, name, artist, album, cover, order, url, color, lyric=None
     return False
 
 
-def add_task(vol, url):
-    if Task.objects(vol=vol).__len__() == 0:
-        task = Task(
-            vol=vol,
-            url=url
-        )
-        task.save()
-        return True
-    return False
+# def add_task(vol, url):
+#     if Task.objects(vol=vol).__len__() == 0:
+#         task = Task(
+#             vol=vol,
+#             url=url
+#         )
+#         task.save()
+#         return True
+#     return False
 
 
 def add_single(id, from_id, name, artist, cover, url, description, date, recommender, color):
