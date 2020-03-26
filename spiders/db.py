@@ -105,12 +105,16 @@ class Col(db.Document):
 
     title = db.StringField(required=True, unique=True)
     href = db.StringField(required=True, unique=True)
+    cover_min = db.StringField(required=True, unique=True)
     cover = db.StringField(required=True, unique=True)
+    desc = db.StringField(required=True)
+    tags = db.ListField()
+    player_list = db.ListField()
 
 
-def add_col(title, href, cover):
+def add_col(title, href, cover_min, cover, desc, tags, player_list):
     if Col.objects(title=title).__len__() == 0:
-        new_col = Col(title=title, href=href, cover=cover)
+        new_col = Col(title=title, href=href, cover_min=cover_min, cover=cover, desc=desc, tags=tags, player_list=player_list)
         new_col.save()
         return True
     return False
