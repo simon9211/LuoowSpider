@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+import threading
+
 import mongoengine as db
 
 db.connect('luoow')
@@ -45,19 +47,14 @@ class Vol(db.Document):
 
 
 class Single(db.Document):
-    def __init__(self):
-        super(Single, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(Single, self).__init__(*args, **kwargs)
 
-    single_id = db.IntField(required=True)
-    from_id = db.IntField(required=True)
+    src = db.StringField(required=True, unique=True)
+    href = db.ListField(required=True, unique=False)
+    author = db.StringField(required=True)
     name = db.StringField(required=True)
-    artist = db.StringField(required=True)
     cover = db.StringField(required=True)
-    url = db.StringField(required=True)
-    description = db.StringField(required=True)
-    date = db.IntField(required=True)
-    recommender = db.StringField(required=True)
-    color = db.ListField(required=True)
 
 
 class Log(db.Document):
@@ -109,15 +106,27 @@ class Col(db.Document):
     cover = db.StringField(required=True, unique=True)
     desc = db.StringField(required=True)
     tags = db.ListField()
-    player_list = db.ListField()
+    # player_list = db.ListField(required=False)
 
 
 def add_col(title, href, cover_min, cover, desc, tags, player_list):
-    if Col.objects(title=title).__len__() == 0:
-        new_col = Col(title=title, href=href, cover_min=cover_min, cover=cover, desc=desc, tags=tags, player_list=player_list)
+
+    t = threading.Thread(target=add_singles, args=(player_list, href))
+    t.start()
+
+    # add_singles(player_list, href)
+
+    if Col.objects(href=href).__len__() == 0:
+        new_col = Col(title=title, href=href, cover_min=cover_min, cover=cover, desc=desc, tags=tags, )
         new_col.save()
         return True
     return False
+
+
+def add_singles(player_list, href):
+    for single in player_list:
+        # href, src, author, name, cover
+        add_single(src=single['src'], author=single['author'], name=single['name'], href=href, cover=single['cover'])
 
 
 def add_vol(id, title, vol, cover, description, date, length, tag, color):
@@ -170,20 +179,25 @@ def add_track(id, vol, name, artist, album, cover, order, url, color, lyric=None
 #     return False
 
 
-def add_single(id, from_id, name, artist, cover, url, description, date, recommender, color):
-    if Single.objects(date=date).__len__() == 0:
+def add_single(href, src, author, name, cover):
+    single = Single.objects(src=src)
+    print('llllllllllll' + str(len(single)))
+    if len(single) == 0:
         new_single = Single(
-            single_id=id,
-            from_id=from_id,
+            src=src,
+            href=[href],
+            author=author,
             name=name,
-            artist=artist,
-            cover=cover,
-            url=url,
-            description=description,
-            date=date,
-            recommender=recommender,
-            color=color
+            cover=cover
         )
+        # new_single.update()
         new_single.save()
         return True
+    else:
+        h = single[0].href
+        print('aaaaaaa:' + h[0] + ' href:' + href)
+        if href not in h:
+            print('zzzzzzzz' + src)
+            Single.objects(src=src).update(href=h + [href])
+
     return False

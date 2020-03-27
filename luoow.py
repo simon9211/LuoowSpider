@@ -110,10 +110,11 @@ def get_col_items(cols):
             item['href'] = a[1].get('href')
             item['cover_min'] = img.get('src')
             c.append(item)
-            # t_col = threading.Thread(target=get_col_detail, args=(item,))
-            # t_col.start()
-        t_col = threading.Thread(target=get_col_detail, args=(c[0],))
-        t_col.start()
+            t_col = threading.Thread(target=get_col_detail, args=(item,))
+            t_col.start()
+
+        # t_col = threading.Thread(target=get_col_detail, args=(c[0],))
+        # t_col.start()
         # t_cols = threading.Thread(target=save_cols_mongo, args=(cols,))
         # t_cols.start()
         # print(cols)
@@ -128,7 +129,8 @@ def get_col_detail(item):
     div_container = bsObj.find('div', {'class': 'container'})
     cover = div_container.find('img', {'class': 'img-responsive'}).get('src')
     desc = div_container.find('div', {'class': 'desc'})
-    # print(desc)
+    # print(str(desc))
+    # print(type(str(desc)))
     tags = []
     div_tags = div_container.find('div', {'class': 'tag'}).findAll('a')
     for div_tag in div_tags:
@@ -137,14 +139,21 @@ def get_col_detail(item):
     player_list = []
 
     scr = bsObj.find('body').findAll('script')
+    # res = re.split(r'[\[\]]+', scr[-5].get_text())
+    # dic_str = '{' + '"data":[' + res[1] + ']}'
 
-    res = re.split(r'[\[\]]+', scr[-5].get_text())
-    dic_str = "{" + "'data':[" + res[1] + "]}"
+    res = get_singles_json(scr[-5].get_text())
+    dic_str = '{' + '"data":' + res + '}'
+    print(dic_str)
     dic = eval(dic_str)
     player_list = dic['data']
 
-    for e in player_list:
-        print(e)
+    new_col = db.add_col(title=item['title'], href=item['href'], cover_min=item['cover_min'], cover=cover,
+                         desc=str(desc),
+                         tags=tags, player_list=player_list)
+    if new_col:
+        # 插入成功
+        print('col 插入成功')
 
     # li_players = div_container.find('div', {'id': 'skPlayer'})#.find('ul', {'class': 'skPlayer-list'})#.findAll('li')
     # ul = li_players.find('ul', {'class': 'skPlayer-list'})
@@ -194,3 +203,12 @@ def save_cols_mongo(cols):
 
 
 get_home_page()
+
+
+def get_singles_json(singles_str):
+    beg = singles_str.index('[')
+    end = singles_str.rindex(']')
+    if beg < end:
+        return singles_str[beg:end+1]
+
+    return ''
