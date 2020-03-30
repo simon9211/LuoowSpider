@@ -95,7 +95,7 @@ def get_col_items(cols):
             tp = '/' + vol[4:idx] + '_' + str(int(vol[4:idx]) + 99) + '.html'
         url += tp
         idx = random.randint(0, 10)
-        print(url)
+        # print(url)
         bsObj = lib.load_page(url)
         # print(bsObj)
         # sleep(3)
@@ -144,7 +144,7 @@ def get_col_detail(item):
 
     res = get_singles_json(scr[-5].get_text())
     dic_str = '{' + '"data":' + res + '}'
-    print(dic_str)
+    # print(dic_str)
     dic = eval(dic_str)
     player_list = dic['data']
 

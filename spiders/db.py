@@ -50,7 +50,7 @@ class Single(db.Document):
     def __init__(self, *args, **kwargs):
         super(Single, self).__init__(*args, **kwargs)
 
-    src = db.StringField(required=True, unique=True)
+    src = db.StringField(required=True, unique=True, sparse=True)
     href = db.ListField(required=True, unique=False)
     author = db.StringField(required=True)
     name = db.StringField(required=True)
@@ -123,10 +123,15 @@ def add_col(title, href, cover_min, cover, desc, tags, player_list):
     return False
 
 
+lock = threading.Lock()
+
+
 def add_singles(player_list, href):
     for single in player_list:
         # href, src, author, name, cover
+        # lock.acquire()
         add_single(src=single['src'], author=single['author'], name=single['name'], href=href, cover=single['cover'])
+        # lock.release()
 
 
 def add_vol(id, title, vol, cover, description, date, length, tag, color):
@@ -190,8 +195,12 @@ def add_single(href, src, author, name, cover):
             name=name,
             cover=cover
         )
-        # new_single.update()
-        new_single.save()
+        try:
+            new_single.save()
+        except db.exceptions as e:
+            print(e)
+            return False
+
         return True
     else:
         h = single[0].href
