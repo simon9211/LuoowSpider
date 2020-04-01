@@ -64,7 +64,7 @@ function getVol(volNum) {
     });
 
     function exec(resolve, reject) {
-        col.find({vol: parseInt(volNum)}).toArray((error, doc) => {
+        col.find({ vol: parseInt(volNum) }).toArray((error, doc) => {
             if (error) reject(error);
             resolve(doc.length > 0 ? doc[0] : false)
         })
@@ -90,13 +90,13 @@ function getVolList(preVol) {
     });
 
     function exec(resolve, reject) {
-        col.find({vol: { $gt: parseInt(preVol), $lt: getLatestVol() + 1 }})
+        col.find({ vol: { $gt: parseInt(preVol), $lt: getLatestVol() + 1 } })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                for (let j=0; j<doc.length; j++)
+                for (let j = 0; j < doc.length; j++)
                     doc[j].tracks = await getTracks(parseInt(doc[j].vol))
                 resolve(doc)
-        })
+            })
     }
 }
 
@@ -119,7 +119,7 @@ function getSingle(date) {
     });
 
     function exec(resolve, reject) {
-        single.find({date: parseInt(date)}).toArray((error, doc) => {
+        single.find({ date: parseInt(date) }).toArray((error, doc) => {
             if (error) reject(error);
             resolve(doc.length > 0 ? doc[0] : false)
         })
@@ -145,11 +145,11 @@ function getSingleList(preDate) {
     });
 
     function exec(resolve, reject) {
-        single.find({date: { $gt: parseInt(preDate), $lt: getLatestSingle() + 1 }})
+        single.find({ date: { $gt: parseInt(preDate), $lt: getLatestSingle() + 1 } })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
-        })
+            })
     }
 }
 
@@ -179,11 +179,11 @@ function getPeriods() {
     });
 
     function exec(resolve, reject) {
-        period.find({}, {'period_name':1, '_id':0})
+        period.find({}, { 'period_name': 1, '_id': 0 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
-        })
+            })
     }
 }
 
@@ -207,11 +207,11 @@ function getLabels() {
     function exec(resolve, reject) {
         // var f = label.find().toArray()
         // console.log(f)
-        label.find({}, {'label_name':1, '_id':0})
+        label.find({}, { 'label_name': 1, '_id': 0 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
-        })
+            })
     }
 }
 
@@ -233,10 +233,23 @@ function getCols(p) {
     });
 
     function exec(resolve, reject) {
-        col.find({col_id: {'$gte' : 200, '$lte' : 300}}, {'_id':0, 'col_id':0})
-            .toArray(async (error, doc) => {
-                if (error) reject(error);
-                resolve(doc)
-        })
+        var col_id;
+        if (p == 'e' || p == 'r') {
+            // -1 其他
+            //  0 音乐电台
+            col_id = p == 'e' ? -1 : 0;
+            col.find({ col_id: col_id}, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
+                .toArray(async (error, doc) => {
+                    if (error) reject(error);
+                    resolve(doc)
+                })
+        } else {
+            col_id = parseInt(p);
+            col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
+                .toArray(async (error, doc) => {
+                    if (error) reject(error);
+                    resolve(doc)
+                })
+        }
     }
 }

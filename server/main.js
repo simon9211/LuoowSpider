@@ -70,16 +70,9 @@ router.get('/labels', async ctx => {
 
 router.get('/col/:peroid', async ctx => {
     // ctx.body = JSON.stringify(await db.single.getList(parseInt(ctx.params.preDate)));
-    const platform = parseInt(ctx.params.peroid);
+    // const platform = parseInt(ctx.params.peroid);
     let param = ctx.params.peroid;
-    if (param == 'r') {
-        // 音乐电台
-    } else if (param == 'e'){
-        // 其他
-    } else {
-        // 期刊
-    }
-    const data = await db.col.get(platform);
+    const data = await db.col.get(param);
     // let arr = data.map(item => item['label_name']);
     ctx.body = JSON.stringify(data || 'error');
 });
