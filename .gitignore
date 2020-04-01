@@ -14,7 +14,7 @@
 
 server/node_modules/
 server/package-lock.json
-
+server/yarn.lock
 
 # Generated files
 .idea/**/contentModel.xml
