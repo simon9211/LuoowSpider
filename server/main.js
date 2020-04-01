@@ -57,19 +57,20 @@ router.get('/update/:platform/:preVersion', ctx => {
 
 router.get('/periods', async ctx => {
     const data = await db.period.get();
-    let arr = data.map(item => item['period_name']);
-    ctx.body = JSON.stringify(arr || 'error');
+    // let arr = data.map(item => item['period_name']);
+    ctx.body = JSON.stringify(data || 'error');
     // log(`/single/${ctx.params.date}`, ctx.request.ip)
 });
 
 router.get('/labels', async ctx => {
     const data = await db.label.get();
-    let arr = data.map(item => item['label_name']);
-    ctx.body = JSON.stringify(arr || 'error');
+    // let arr = data.map(item => item['label_name']);
+    ctx.body = JSON.stringify(data || 'error');
 })
 
 router.get('/col/:peroid', async ctx => {
-    // const platform = parseInt(ctx.params.peroid);
+    // ctx.body = JSON.stringify(await db.single.getList(parseInt(ctx.params.preDate)));
+    const platform = parseInt(ctx.params.peroid);
     let param = ctx.params.peroid;
     if (param == 'r') {
         // 音乐电台

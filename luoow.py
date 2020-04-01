@@ -83,16 +83,19 @@ def get_col_items(cols):
         lock.release()
 
         url = 'http://www.luoow.com'
-        tp = ''
+        tp, col_id = '', -2
         if vol == '音乐电台':
             tp = '/r/'
+            col_id = 0
         elif vol == '其他':
             tp = '/e/'
+            col_id = -1
         else:
             # string.split(str="", num=string.count(str))
             # string.index(str, beg=0, end=len(string))
             idx = vol.index('-')
             tp = '/' + vol[4:idx] + '_' + str(int(vol[4:idx]) + 99) + '.html'
+
         url += tp
         idx = random.randint(0, 10)
         # print(url)
@@ -109,6 +112,10 @@ def get_col_items(cols):
             item['title'] = a[1].get_text()
             item['href'] = a[1].get('href')[1:-1]
             item['cover_min'] = img.get('src')
+            if col_id == -2:
+                item['col_id'] = int(str(a[1].get('href')[1:-1]))
+            else:
+                item['col_id'] = col_id
             c.append(item)
             t_col = threading.Thread(target=get_col_detail, args=(item,))
             t_col.start()
@@ -148,9 +155,8 @@ def get_col_detail(item):
     dic = eval(dic_str)
     player_list = dic['data']
 
-    new_col = db.add_col(title=item['title'], href=item['href'], cover_min=item['cover_min'], cover=cover,
-                         desc=str(desc),
-                         tags=tags, player_list=player_list)
+    new_col = db.add_col(title=item['title'], href=item['href'], cover_min=item['cover_min'], cover=cover, desc=str(desc),
+                         tags=tags, player_list=player_list, col_id=item['col_id'])
     if new_col:
         # 插入成功
         print('col 插入成功')

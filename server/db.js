@@ -179,7 +179,7 @@ function getPeriods() {
     });
 
     function exec(resolve, reject) {
-        period.find()
+        period.find({}, {'period_name':1, '_id':0})
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
@@ -207,7 +207,7 @@ function getLabels() {
     function exec(resolve, reject) {
         // var f = label.find().toArray()
         // console.log(f)
-        label.find()
+        label.find({}, {'label_name':1, '_id':0})
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
@@ -216,5 +216,27 @@ function getLabels() {
 }
 
 function getCols(p) {
+    return new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!col)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (single) {
+                    exec(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec(resolve, reject)
+    });
 
+    function exec(resolve, reject) {
+        col.find({col_id: {'$gte' : 200, '$lte' : 300}}, {'_id':0, 'col_id':0})
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                resolve(doc)
+        })
+    }
 }

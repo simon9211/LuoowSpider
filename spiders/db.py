@@ -60,16 +60,17 @@ class Col(db.Document):
     def __init__(self, *args, **kwargs):
         super(Col, self).__init__(*args, **kwargs)
 
-    title = db.StringField(required=True, unique=True)
-    href = db.StringField(required=True, unique=True)
-    cover_min = db.StringField(required=True, unique=True)
-    cover = db.StringField(required=True, unique=True)
+    title = db.StringField(required=True, unique=True, sparse=True)
+    href = db.StringField(required=True, unique=True, sparse=True)
+    col_id = db.IntField(required=True, unique=False)
+    cover_min = db.StringField(required=True, unique=True, sparse=True)
+    cover = db.StringField(required=True, unique=True, sparse=True)
     desc = db.StringField(required=True)
     tags = db.ListField()
     # player_list = db.ListField(required=False)
 
 
-def add_col(title, href, cover_min, cover, desc, tags, player_list):
+def add_col(title, href, cover_min, cover, desc, tags, player_list, col_id):
 
     t = threading.Thread(target=add_singles, args=(player_list, href))
     t.start()
@@ -77,7 +78,7 @@ def add_col(title, href, cover_min, cover, desc, tags, player_list):
     # add_singles(player_list, href)
 
     if Col.objects(href=href).__len__() == 0:
-        new_col = Col(title=title, href=href, cover_min=cover_min, cover=cover, desc=desc, tags=tags, )
+        new_col = Col(title=title, href=href, cover_min=cover_min, cover=cover, desc=desc, tags=tags, col_id=col_id)
         new_col.save()
         return True
     return False
@@ -92,7 +93,6 @@ def add_singles(player_list, href):
         # lock.acquire()
         add_single(src=single['src'], author=single['author'], name=single['name'], href=href, cover=single['cover'])
         # lock.release()
-
 
 
 def add_single(href, src, author, name, cover):
