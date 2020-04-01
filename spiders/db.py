@@ -6,46 +6,6 @@ import mongoengine as db
 db.connect('luoow')
 
 
-# class Task(db.document):
-#     def __init__(self):
-#         super(Task, self).__init__()
-#
-#     done = db.BooleanField(default=False)
-#     vol = db.IntField(required=True, unique=True)
-#     url = db.StringField(required=True)
-
-
-class Track(db.Document):
-    def __init__(self, *args, **kwargs):
-        super(Track, self).__init__(*args, **kwargs)
-
-    track_id = db.IntField(required=True)
-    vol = db.IntField(required=True)
-    name = db.StringField(required=True)
-    artist = db.StringField(required=True)
-    album = db.StringField(required=True)
-    cover = db.StringField(required=True)
-    order = db.IntField(required=True)
-    url = db.StringField(required=True)
-    lyric = db.StringField(required=False)
-    color = db.ListField(required=True)
-
-
-class Vol(db.Document):
-    def __init__(self, *args, **kwargs):
-        super(Vol, self).__init__(*args, **kwargs)
-
-    vol_id = db.IntField(required=True)
-    title = db.StringField(required=True)
-    vol = db.IntField(required=True, unique=True)
-    cover = db.StringField(required=True, unique=False)
-    description = db.StringField(required=False, unique=False)
-    date = db.StringField(required=True)
-    length = db.IntField(required=True)
-    tag = db.ListField()
-    color = db.ListField(required=True)
-
-
 class Single(db.Document):
     def __init__(self, *args, **kwargs):
         super(Single, self).__init__(*args, **kwargs)
@@ -133,55 +93,6 @@ def add_singles(player_list, href):
         add_single(src=single['src'], author=single['author'], name=single['name'], href=href, cover=single['cover'])
         # lock.release()
 
-
-def add_vol(id, title, vol, cover, description, date, length, tag, color):
-    if Vol.objects(vol=vol).__len__() == 0:
-        new_vol = Vol(
-            vol_id=id,
-            title=title,
-            vol=vol,
-            cover=cover,
-            description=description,
-            date=date,
-            length=length,
-            tag=tag,
-            color=color
-        )
-
-        new_vol.save()
-        return True
-    return False
-
-
-def add_track(id, vol, name, artist, album, cover, order, url, color, lyric=None):
-    new_vol = Vol.objects(vol=vol)
-    if new_vol.__len__() == 1:
-        track = Track(
-            vol=int(vol),
-            track_id=id,
-            name=name,
-            artist=artist,
-            album=album,
-            cover=cover,
-            order=order,
-            url=url,
-            lyric=lyric,
-            color=color
-        )
-        track.save()
-        return True
-    return False
-
-
-# def add_task(vol, url):
-#     if Task.objects(vol=vol).__len__() == 0:
-#         task = Task(
-#             vol=vol,
-#             url=url
-#         )
-#         task.save()
-#         return True
-#     return False
 
 
 def add_single(href, src, author, name, cover):

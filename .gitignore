@@ -12,6 +12,8 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+server/node_modules/
+
 # Generated files
 .idea/**/contentModel.xml
 
