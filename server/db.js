@@ -10,6 +10,7 @@ module.exports = {
     },
     // 期详情
     col: {
+        get: getCols
     },
     // 单曲
     single: {
@@ -212,4 +213,8 @@ function getLabels() {
                 resolve(doc)
         })
     }
+}
+
+function getCols(p) {
+
 }

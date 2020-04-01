@@ -11,7 +11,7 @@ class Single(db.Document):
         super(Single, self).__init__(*args, **kwargs)
 
     src = db.StringField(required=True, unique=True, sparse=True)
-    href = db.ListField(required=True, unique=False)
+    href = db.StringField(required=True,)
     author = db.StringField(required=True)
     name = db.StringField(required=True)
     cover = db.StringField(required=True)
@@ -101,23 +101,19 @@ def add_single(href, src, author, name, cover):
     if len(single) == 0:
         new_single = Single(
             src=src,
-            href=[href],
+            href=href,
             author=author,
             name=name,
             cover=cover
         )
-        try:
-            new_single.save()
-        except db.exceptions as e:
-            print(e)
-            return False
-
+        new_single.save()
         return True
     else:
-        h = single[0].href
-        print('aaaaaaa:' + h[0] + ' href:' + href)
-        if href not in h:
-            print('zzzzzzzz' + src)
-            Single.objects(src=src).update(href=h + [href])
+        print(src)
+        # h = single[0].href
+        # print('aaaaaaa:' + h[0] + ' href:' + href)
+        # if href not in h:
+        #     print('zzzzzzzz' + src)
+        #     Single.objects(src=src).update(href=h + [href])
 
     return False

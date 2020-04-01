@@ -107,7 +107,7 @@ def get_col_items(cols):
             a = col.findAll('a')
             img = col.find('img')
             item['title'] = a[1].get_text()
-            item['href'] = a[1].get('href')
+            item['href'] = a[1].get('href')[1:-1]
             item['cover_min'] = img.get('src')
             c.append(item)
             t_col = threading.Thread(target=get_col_detail, args=(item,))
@@ -121,7 +121,7 @@ def get_col_items(cols):
 
 
 def get_col_detail(item):
-    url = 'http://www.luoow.com' + item['href']
+    url = 'http://www.luoow.com/' + item['href'] + '/'
     print(url)
     bsObj = lib.load_page(url)
     # print(bsObj)

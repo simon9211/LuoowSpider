@@ -22,16 +22,6 @@ router.get('/single/:date', async ctx => {
 });
 
 
-router.get('/latest/:type', ctx => {
-    const type = ctx.params.type;
-    ctx.body = (type === 'vol' || type === 'single') ? db[type].latest() : -1;
-
-    // ctx.body = JSON.stringify('hello node js');
-
-    // log(`/latest/${ctx.params.type}`, ctx.request.ip)
-});
-
-
 router.get('/download/:platform', ctx => {
     const platform = parseInt(ctx.params.platform);
     const URL = `http://os3s219a3.bkt.clouddn.com/Luoo.qy-v${config().update.mainVersion}.0.${['dmg', 'exe', 'zip'][platform]}`;
@@ -78,6 +68,20 @@ router.get('/labels', async ctx => {
     ctx.body = JSON.stringify(arr || 'error');
 })
 
+router.get('/col/:peroid', async ctx => {
+    // const platform = parseInt(ctx.params.peroid);
+    let param = ctx.params.peroid;
+    if (param == 'r') {
+        // 音乐电台
+    } else if (param == 'e'){
+        // 其他
+    } else {
+        // 期刊
+    }
+    const data = await db.col.get(platform);
+    // let arr = data.map(item => item['label_name']);
+    ctx.body = JSON.stringify(data || 'error');
+});
 
 
 
