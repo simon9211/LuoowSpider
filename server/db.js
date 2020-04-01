@@ -6,16 +6,15 @@ const config = () => fs.readJSONFileSync('./package.json').config;
 module.exports = {
     // 期
     period: {
-        get: getPeriods
+        get: getPeriods,
     },
     // 期详情
     col: {
-        get: getCols
+        get: getCols,
+        getLabel: getLabelCols
     },
     // 单曲
     single: {
-        latest: getLatestSingle,
-        get: getSingle,
         getList: getSingleList
     },
     // 标签
@@ -100,59 +99,6 @@ function getVolList(preVol) {
     }
 }
 
-
-function getSingle(date) {
-    return new Promise((resolve, reject) => {
-        let retryTimes = 0;
-        let timer;
-        if (!single)
-            timer = setInterval(function () {
-                if (retryTimes > config().maxRetryTimes)
-                    return reject('Database not available now.');
-                console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
-                    exec(resolve, reject);
-                    clearInterval(timer);
-                }
-            }, 200);
-        else exec(resolve, reject)
-    });
-
-    function exec(resolve, reject) {
-        single.find({ date: parseInt(date) }).toArray((error, doc) => {
-            if (error) reject(error);
-            resolve(doc.length > 0 ? doc[0] : false)
-        })
-    }
-}
-
-
-function getSingleList(preDate) {
-    return new Promise((resolve, reject) => {
-        let retryTimes = 0;
-        let timer;
-        if (!single)
-            timer = setInterval(function () {
-                if (retryTimes > config().maxRetryTimes)
-                    return reject('Database not available now.');
-                console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
-                    exec(resolve, reject);
-                    clearInterval(timer);
-                }
-            }, 200);
-        else exec(resolve, reject)
-    });
-
-    function exec(resolve, reject) {
-        single.find({ date: { $gt: parseInt(preDate), $lt: getLatestSingle() + 1 } })
-            .toArray(async (error, doc) => {
-                if (error) reject(error);
-                resolve(doc)
-            })
-    }
-}
-
 function getLatestVol() {
     return config().latestVol
 }
@@ -179,7 +125,7 @@ function getPeriods() {
     });
 
     function exec(resolve, reject) {
-        period.find({}, { 'period_name': 1, '_id': 0 })
+        period.find({}, { '_id': 0 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
@@ -207,7 +153,7 @@ function getLabels() {
     function exec(resolve, reject) {
         // var f = label.find().toArray()
         // console.log(f)
-        label.find({}, { 'label_name': 1, '_id': 0 })
+        label.find({}, { '_id': 0 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
@@ -251,5 +197,58 @@ function getCols(p) {
                     resolve(doc)
                 })
         }
+    }
+}
+
+function getLabelCols(label) {
+    return new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!single)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (single) {
+                    exec(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec(resolve, reject)
+    });
+
+    function exec(resolve, reject) {
+        col.find({ tags:label }, { '_id': 0 }).sort({title:1, _id:-1})
+        .toArray((error, doc) => {
+            if (error) reject(error);
+            resolve(doc)
+        })
+    }
+}
+
+
+function getSingleList(href) {
+    return new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!single)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (single) {
+                    exec(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec(resolve, reject)
+    });
+
+    function exec(resolve, reject) {
+        single.find({ href:href }, { '_id': 0 }).sort({src:1, _id:-1})
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                resolve(doc)
+            })
     }
 }

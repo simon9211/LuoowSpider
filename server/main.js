@@ -9,19 +9,6 @@ const config = () => require('./package.json');
 
 const [app, router] = [new Koa(), new Router()];
 
-
-router.get('/singles/:preDate', async ctx => {
-    ctx.body = JSON.stringify(await db.single.getList(parseInt(ctx.params.preDate)));
-    log(`/singles/${ctx.params.preDate}`, ctx.request.ip)
-});
-
-router.get('/single/:date', async ctx => {
-    const data = await db.single.get(parseInt(ctx.params.date));
-    ctx.body = JSON.stringify(data || 'error');
-    log(`/single/${ctx.params.date}`, ctx.request.ip)
-});
-
-
 router.get('/download/:platform', ctx => {
     const platform = parseInt(ctx.params.platform);
     const URL = `http://os3s219a3.bkt.clouddn.com/Luoo.qy-v${config().update.mainVersion}.0.${['dmg', 'exe', 'zip'][platform]}`;
@@ -77,9 +64,17 @@ router.get('/col/:peroid', async ctx => {
     ctx.body = JSON.stringify(data || 'error');
 });
 
+router.get('/col/tag/:tag', async ctx => {
+    let param = ctx.params.tag;
+    const data = await db.col.getLabel(param);
+    // let arr = data.map(item => item['label_name']);
+    ctx.body = JSON.stringify(data || 'error');
+});
 
-
-
+router.get('/singles/:col', async ctx => {
+    ctx.body = JSON.stringify(await db.single.getList(ctx.params.col));
+    //log(`/singles/${ctx.params.preDate}`, ctx.request.ip)
+});
 
 app.use(router.routes()).listen(config().config.port);
 app.use(require('koa-static-server')({
