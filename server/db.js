@@ -11,7 +11,8 @@ module.exports = {
     // 期详情
     col: {
         get: getCols,
-        getLabel: getLabelCols
+        getLabel: getLabelCols,
+        getLatest: getLatestCols
     },
     // 单曲
     single: {
@@ -165,7 +166,7 @@ function getLabels() {
 }
 
 // 查询某一期所有的专辑
-function getCols(p) {
+function getCols(p, query) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
@@ -191,21 +192,21 @@ function getCols(p) {
             col.find({ col_id: col_id}, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
-                    resolve(doc)
+                    resolve(handlePage(doc, query));
                 })
         } else {
             col_id = parseInt(p);
             col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
-                    resolve(doc)
+                    resolve(handlePage(doc, query));
                 })
         }
     }
 }
 
 // 查询含有该标签的所有专辑
-function getLabelCols(label) {
+function getLabelCols(label, query) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
@@ -226,13 +227,49 @@ function getLabelCols(label) {
         col.find({ tags:label }, { '_id': 0 }).sort({title:1, _id:-1})
         .toArray((error, doc) => {
             if (error) reject(error);
-            resolve(doc)
+            resolve(handlePage(doc, query));
+        })
+    }
+}
+
+// 查询最新的专辑 10条
+function getLatestCols() {
+    return new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!single)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (single) {
+                    exec(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec(resolve, reject)
+    });
+
+    function exec(resolve, reject) {
+        col.find({}, { '_id': 0 }).sort({title:1, _id:-1})
+        .toArray((error, doc) => {
+            if (error) reject(error);
+            if (doc.length < 10) {
+                resolve({'data': doc});
+            } else {
+                var res = [];
+                for (let index = doc.length - 10; index < doc.length; index++) {
+                    res.push(doc[index]);
+                }
+                resolve({'data': res});
+            }
+            
         })
     }
 }
 
 // 查询专辑下所有的单曲
-function getSingleList(href) {
+function getSingleList(href, query) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
@@ -253,7 +290,25 @@ function getSingleList(href) {
         single.find({ href:href }, { '_id': 0 }).sort({src:1, _id:-1})
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                resolve(doc)
+                resolve(handlePage(doc, query));
             })
     }
+}
+
+// 处理分页
+function handlePage(doc, query) {
+    let page = query.page != undefined?parseInt(query.page):0;
+    let pageSize = query.pageSize != undefined?parseInt(query.pageSize):10;
+    var arr = [];
+    if (doc.length < page * pageSize) {
+        for (let index = 0; index < pageSize; index++) {
+            arr.push(doc[index])
+        }
+    } else {
+        for (let index = page * pageSize; index < page * pageSize + pageSize; index++) {
+            arr.push(doc[index])
+        }
+    }
+
+    return {'data':arr, 'totalCount': doc.length, 'currentPage':page};
 }

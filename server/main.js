@@ -56,12 +56,16 @@ router.get('/labels', async ctx => {
     ctx.body = JSON.stringify(data || 'error');
 })
 
+
+// 分页 page  0开始
+// pageSize  默认 10
+
 // 获取期刊里面所有专辑
-router.get('/col/:peroid', async ctx => {
+router.get('/col/peroid/:peroid', async ctx => {
     // ctx.body = JSON.stringify(await db.single.getList(parseInt(ctx.params.preDate)));
     // const platform = parseInt(ctx.params.peroid);
     let param = ctx.params.peroid;
-    const data = await db.col.get(param);
+    const data = await db.col.get(param, ctx.query);
     // let arr = data.map(item => item['label_name']);
     ctx.body = JSON.stringify(data || 'error');
 });
@@ -69,14 +73,20 @@ router.get('/col/:peroid', async ctx => {
 // 获取标签下所有的专辑
 router.get('/col/tag/:tag', async ctx => {
     let param = ctx.params.tag;
-    const data = await db.col.getLabel(param);
+    const data = await db.col.getLabel(param, ctx.query);
     // let arr = data.map(item => item['label_name']);
+    ctx.body = JSON.stringify(data || 'error');
+});
+
+// 获取最新的专辑
+router.get('/col/lastest', async ctx => {
+    const data = await db.col.getLatest();
     ctx.body = JSON.stringify(data || 'error');
 });
 
 // 获取专辑里面所有的单曲
 router.get('/singles/:col', async ctx => {
-    ctx.body = JSON.stringify(await db.single.getList(ctx.params.col));
+    ctx.body = JSON.stringify(await db.single.getList(ctx.params.col, ctx.query));
     //log(`/singles/${ctx.params.preDate}`, ctx.request.ip)
 });
 
