@@ -107,6 +107,8 @@ function getLatestSingle() {
     return config().latestSingle
 }
 
+
+// 查询所有的期刊
 function getPeriods() {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
@@ -133,6 +135,7 @@ function getPeriods() {
     }
 }
 
+// 查询所有的标签
 function getLabels() {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
@@ -161,6 +164,7 @@ function getLabels() {
     }
 }
 
+// 查询某一期所有的专辑
 function getCols(p) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
@@ -200,6 +204,7 @@ function getCols(p) {
     }
 }
 
+// 查询含有该标签的所有专辑
 function getLabelCols(label) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
@@ -226,7 +231,7 @@ function getLabelCols(label) {
     }
 }
 
-
+// 查询专辑下所有的单曲
 function getSingleList(href) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
