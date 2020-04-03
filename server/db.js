@@ -128,12 +128,19 @@ function getPeriods() {
     });
 
     function exec(resolve, reject) {
-        period.find({}, { '_id': 0 })
+        period.find({}, { '_id': 0 }).map(sortPeriodName)
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
             })
     }
+}
+
+function sortPeriodName(item) {
+    if (item['period_name'] == '音乐电台' || item['period_name'] == '其他') {
+        return null;
+    }
+    return item['period_name'];
 }
 
 // 查询所有的标签
@@ -157,7 +164,7 @@ function getLabels() {
     function exec(resolve, reject) {
         // var f = label.find().toArray()
         // console.log(f)
-        label.find({}, { '_id': 0 })
+        label.find({}, { '_id': 0 }).map(item => item["label_name"])
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)

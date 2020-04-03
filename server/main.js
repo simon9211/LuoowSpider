@@ -91,7 +91,9 @@ router.post('/col/lastest', async ctx => {
 });
 
 // 获取专辑里面所有的单曲
-
+// "href":"28",
+// "page":1,
+// "pageSize": 3
 router.post('/singles/col', async ctx => {
     let param = ctx.request.body;
     ctx.body = JSON.stringify(await db.single.getList(param,));
