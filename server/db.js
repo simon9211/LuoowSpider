@@ -12,7 +12,8 @@ module.exports = {
     col: {
         get: getCols,
         getLabel: getLabelCols,
-        getLatest: getLatestCols
+        getLatest: getLatestCols,
+        getHome: getHomeCols,
     },
     // 单曲
     single: {
@@ -196,14 +197,14 @@ function getCols(p) {
             // -1 其他
             //  0 音乐电台
             col_id = p.period == 'e' ? -1 : 0;
-            col.find({ col_id: col_id}, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
+            col.find({ col_id: col_id }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
                     resolve(handlePage(doc, p));
                 })
         } else {
             col_id = parseInt(p);
-            col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
+            col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
                     resolve(handlePage(doc, p));
@@ -231,11 +232,136 @@ function getLabelCols(p) {
     });
 
     function exec(resolve, reject) {
-        col.find({ tags:p.tag }, { '_id': 0 }).sort({title:1, _id:-1})
-        .toArray((error, doc) => {
-            if (error) reject(error);
-            resolve(handlePage(doc, p));
-        })
+        col.find({ tags: p.tag }, { '_id': 0 }).sort({ title: 1, _id: -1 })
+            .toArray((error, doc) => {
+                if (error) reject(error);
+                resolve(handlePage(doc, p));
+            })
+    }
+}
+
+function getHomeCols(p) {
+    var promise = new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!col)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (col) {
+                    exec(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec(resolve, reject)
+    });
+
+    var promise1 = new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!col)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (col) {
+                    exec1(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec1(resolve, reject)
+    });
+
+    var promise3 = new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!col)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (col) {
+                    exec2(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec2(resolve, reject)
+    });
+
+    var promise4 = new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!col)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (col) {
+                    exec2(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec2(resolve, reject)
+    });
+
+
+    return Promise.all([promise, promise1, promise3]).then(posts => {
+        // Promise.resolve()
+        return {'data':{'r':posts[0],'e':posts[1],'n':posts[2]}};
+    }).catch(function (reason) {
+        // ...
+    });
+
+    function exec(resolve, reject) {
+        //  0 音乐电台
+        var res = {};
+        col.find({ col_id: 0 }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                if (doc.length < 10) {
+                    resolve(doc);
+                } else {
+                    var res = [];
+                    for (let index = doc.length - 10; index < doc.length; index++) {
+                        res.push(doc[index]);
+                    }
+                    resolve(res);
+                }
+            })
+    }
+
+    function exec1(resolve, reject) {
+        // -1 其他
+        col.find({ col_id: -1 }, { '_id': 0 }).sort({ title: 1, _id: -1 })
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                if (doc.length < 10) {
+                    resolve(doc);
+                } else {
+                    var res = [];
+                    for (let index = doc.length - 10; index < doc.length; index++) {
+                        res.push(doc[index]);
+                    }
+                    resolve(res);
+                }
+            })
+    }
+
+    function exec2(resolve, reject) {
+        col.find({}, { '_id': 0 }).sort({ title: 1, _id: -1 })
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                if (doc.length < 10) {
+                    resolve(doc);
+                } else {
+                    var res = [];
+                    for (let index = doc.length - 10; index < doc.length; index++) {
+                        res.push(doc[index]);
+                    }
+                    resolve(res);
+                }
+            })
     }
 }
 
@@ -258,20 +384,19 @@ function getLatestCols() {
     });
 
     function exec(resolve, reject) {
-        col.find({}, { '_id': 0 }).sort({title:1, _id:-1})
-        .toArray((error, doc) => {
-            if (error) reject(error);
-            if (doc.length < 10) {
-                resolve({'data': doc});
-            } else {
-                var res = [];
-                for (let index = doc.length - 10; index < doc.length; index++) {
-                    res.push(doc[index]);
+        col.find({}, { '_id': 0 }).sort({ title: 1, _id: -1 })
+            .toArray((error, doc) => {
+                if (error) reject(error);
+                if (doc.length < 10) {
+                    resolve({ 'data': doc });
+                } else {
+                    var res = [];
+                    for (let index = doc.length - 10; index < doc.length; index++) {
+                        res.push(doc[index]);
+                    }
+                    resolve({ 'data': res });
                 }
-                resolve({'data': res});
-            }
-            
-        })
+            })
     }
 }
 
@@ -294,7 +419,7 @@ function getSingleList(p) {
     });
 
     function exec(resolve, reject) {
-        single.find({ href:p.href }, { '_id': 0 }).sort({src:1, _id:-1})
+        single.find({ href: p.href }, { '_id': 0 }).sort({ src: 1, _id: -1 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(handlePage(doc, p));
@@ -304,8 +429,8 @@ function getSingleList(p) {
 
 // 处理分页
 function handlePage(doc, query) {
-    let page = query.page != undefined?parseInt(query.page):0;
-    let pageSize = query.pageSize != undefined?parseInt(query.pageSize):10;
+    let page = query.page != undefined ? parseInt(query.page) : 0;
+    let pageSize = query.pageSize != undefined ? parseInt(query.pageSize) : 10;
     var arr = [];
     if (doc.length < page * pageSize) {
         for (let index = 0; index < pageSize; index++) {
@@ -317,5 +442,5 @@ function handlePage(doc, query) {
         }
     }
 
-    return {'data':arr, 'totalCount': doc.length, 'currentPage':page};
+    return { 'data': arr, 'totalCount': doc.length, 'currentPage': page };
 }

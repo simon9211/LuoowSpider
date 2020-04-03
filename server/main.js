@@ -100,6 +100,12 @@ router.post('/singles/col', async ctx => {
     //log(`/singles/${ctx.params.preDate}`, ctx.request.ip)
 });
 
+// 获取首页数据
+router.post('/home', async ctx => {
+    let param = ctx.request.body;
+    ctx.body = JSON.stringify(await db.col.getHome(param,));
+});
+
 
 app.use(bodyParser());
 app.use(router.routes()).listen(config().config.port);
