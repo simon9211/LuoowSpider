@@ -1,5 +1,6 @@
 const Koa = require('koa');
 const Router = require('koa-router');
+const bodyParser = require('koa-bodyparser');
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors');
@@ -42,7 +43,7 @@ router.get('/update/:platform/:preVersion', ctx => {
 });
 
 // 获取所有期刊
-router.get('/periods', async ctx => {
+router.post('/periods', async ctx => {
     const data = await db.period.get();
     // let arr = data.map(item => item['period_name']);
     ctx.body = JSON.stringify(data || 'error');
@@ -50,48 +51,55 @@ router.get('/periods', async ctx => {
 });
 
 // 获取所有标签
-router.get('/labels', async ctx => {
+router.post('/labels', async ctx => {
     const data = await db.label.get();
     // let arr = data.map(item => item['label_name']);
     ctx.body = JSON.stringify(data || 'error');
 })
 
-
 // 分页 page  0开始
 // pageSize  默认 10
-
 // 获取期刊里面所有专辑
-router.get('/col/peroid/:peroid', async ctx => {
+// "period":"r",
+// "page":1,
+// "pageSize": 3
+router.post('/col/period', async ctx => {
     // ctx.body = JSON.stringify(await db.single.getList(parseInt(ctx.params.preDate)));
     // const platform = parseInt(ctx.params.peroid);
-    let param = ctx.params.peroid;
-    const data = await db.col.get(param, ctx.query);
+
+    let param = ctx.request.body;
+    const data = await db.col.get(param,);
     // let arr = data.map(item => item['label_name']);
     ctx.body = JSON.stringify(data || 'error');
 });
 
 // 获取标签下所有的专辑
-router.get('/col/tag/:tag', async ctx => {
-    let param = ctx.params.tag;
-    const data = await db.col.getLabel(param, ctx.query);
+// "tag":"摇滚",
+// "page":1,
+// "pageSize": 3
+router.post('/col/tag', async ctx => {
+    let param = ctx.request.body;
+    const data = await db.col.getLabel(param,);
     // let arr = data.map(item => item['label_name']);
     ctx.body = JSON.stringify(data || 'error');
 });
 
 // 获取最新的专辑
-router.get('/col/lastest', async ctx => {
+router.post('/col/lastest', async ctx => {
     const data = await db.col.getLatest();
     ctx.body = JSON.stringify(data || 'error');
 });
 
 // 获取专辑里面所有的单曲
-router.get('/singles/:col', async ctx => {
-    ctx.body = JSON.stringify(await db.single.getList(ctx.params.col, ctx.query));
+
+router.post('/singles/col', async ctx => {
+    let param = ctx.request.body;
+    ctx.body = JSON.stringify(await db.single.getList(param,));
     //log(`/singles/${ctx.params.preDate}`, ctx.request.ip)
 });
 
 
-
+app.use(bodyParser());
 app.use(router.routes()).listen(config().config.port);
 app.use(require('koa-static-server')({
     rootDir: path.join(__dirname, '../website'),

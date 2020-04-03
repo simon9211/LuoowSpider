@@ -166,7 +166,7 @@ function getLabels() {
 }
 
 // 查询某一期所有的专辑
-function getCols(p, query) {
+function getCols(p) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
@@ -185,28 +185,28 @@ function getCols(p, query) {
 
     function exec(resolve, reject) {
         var col_id;
-        if (p == 'e' || p == 'r') {
+        if (p.period == 'e' || p.period == 'r') {
             // -1 其他
             //  0 音乐电台
-            col_id = p == 'e' ? -1 : 0;
+            col_id = p.period == 'e' ? -1 : 0;
             col.find({ col_id: col_id}, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
-                    resolve(handlePage(doc, query));
+                    resolve(handlePage(doc, p));
                 })
         } else {
             col_id = parseInt(p);
             col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({href:1, _id:-1})
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
-                    resolve(handlePage(doc, query));
+                    resolve(handlePage(doc, p));
                 })
         }
     }
 }
 
 // 查询含有该标签的所有专辑
-function getLabelCols(label, query) {
+function getLabelCols(p) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
@@ -224,10 +224,10 @@ function getLabelCols(label, query) {
     });
 
     function exec(resolve, reject) {
-        col.find({ tags:label }, { '_id': 0 }).sort({title:1, _id:-1})
+        col.find({ tags:p.tag }, { '_id': 0 }).sort({title:1, _id:-1})
         .toArray((error, doc) => {
             if (error) reject(error);
-            resolve(handlePage(doc, query));
+            resolve(handlePage(doc, p));
         })
     }
 }
@@ -269,7 +269,7 @@ function getLatestCols() {
 }
 
 // 查询专辑下所有的单曲
-function getSingleList(href, query) {
+function getSingleList(p) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
@@ -287,10 +287,10 @@ function getSingleList(href, query) {
     });
 
     function exec(resolve, reject) {
-        single.find({ href:href }, { '_id': 0 }).sort({src:1, _id:-1})
+        single.find({ href:p.href }, { '_id': 0 }).sort({src:1, _id:-1})
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                resolve(handlePage(doc, query));
+                resolve(handlePage(doc, p));
             })
     }
 }
