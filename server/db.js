@@ -289,23 +289,6 @@ function getHomeCols(p) {
         else exec2(resolve, reject)
     });
 
-    var promise4 = new Promise((resolve, reject) => {
-        let retryTimes = 0;
-        let timer;
-        if (!col)
-            timer = setInterval(function () {
-                if (retryTimes > config().maxRetryTimes)
-                    return reject('Database not available now.');
-                console.log('Waiting for database. Retry 200ms later.');
-                if (col) {
-                    exec2(resolve, reject);
-                    clearInterval(timer);
-                }
-            }, 200);
-        else exec2(resolve, reject)
-    });
-
-
     return Promise.all([promise, promise1, promise3]).then(posts => {
         // Promise.resolve()
         return {'data':{'r':posts[0],'e':posts[1],'n':posts[2]}};
@@ -316,18 +299,10 @@ function getHomeCols(p) {
     function exec(resolve, reject) {
         //  0 音乐电台
         var res = {};
-        col.find({ col_id: 0 }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
+        col.find({ col_id: 0 }, { '_id': 0, 'col_id': 0,}).sort({ href: 1, _id: -1 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                if (doc.length < 10) {
-                    resolve(doc);
-                } else {
-                    var res = [];
-                    for (let index = doc.length - 10; index < doc.length; index++) {
-                        res.push(doc[index]);
-                    }
-                    resolve(res);
-                }
+                resolve(resolveResponse(doc, 10));
             })
     }
 
@@ -336,15 +311,7 @@ function getHomeCols(p) {
         col.find({ col_id: -1 }, { '_id': 0 }).sort({ title: 1, _id: -1 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                if (doc.length < 10) {
-                    resolve(doc);
-                } else {
-                    var res = [];
-                    for (let index = doc.length - 10; index < doc.length; index++) {
-                        res.push(doc[index]);
-                    }
-                    resolve(res);
-                }
+                resolve(resolveResponse(doc, 10));
             })
     }
 
@@ -352,16 +319,20 @@ function getHomeCols(p) {
         col.find({}, { '_id': 0 }).sort({ title: 1, _id: -1 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                if (doc.length < 10) {
-                    resolve(doc);
-                } else {
-                    var res = [];
-                    for (let index = doc.length - 10; index < doc.length; index++) {
-                        res.push(doc[index]);
-                    }
-                    resolve(res);
-                }
+                resolve(resolveResponse(doc, 10));
             })
+    }
+}
+
+function resolveResponse(doc, n) {
+    if (doc.length < n) {
+        return doc;
+    } else {
+        var res = [];
+        for (let index = doc.length - n; index < doc.length; index++) {
+            res.push(doc[index]);
+        }
+        return res;
     }
 }
 
@@ -422,7 +393,7 @@ function getSingleList(p) {
         single.find({ href: p.href }, { '_id': 0 }).sort({ src: 1, _id: -1 })
             .toArray(async (error, doc) => {
                 if (error) reject(error);
-                resolve(handlePage(doc, p));
+                resolve({ 'data': doc,});
             })
     }
 }
