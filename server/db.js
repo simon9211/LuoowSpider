@@ -7,6 +7,7 @@ module.exports = {
     // 期
     period: {
         get: getPeriods,
+        getPeriodsLabels: getPeriodsAndLabels
     },
     // 期详情
     col: {
@@ -24,6 +25,7 @@ module.exports = {
         get: getLabels
     },
     log: writeLog
+    
 };
 
 
@@ -120,7 +122,7 @@ function getPeriods() {
                 if (retryTimes > config().maxRetryTimes)
                     return reject('Database not available now.');
                 console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
+                if (period) {
                     exec(resolve, reject);
                     clearInterval(timer);
                 }
@@ -144,6 +146,64 @@ function sortPeriodName(item) {
     return item['period_name'];
 }
 
+function getPeriodsAndLabels() {
+    var promise = new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!period)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (period) {
+                    exec(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec(resolve, reject)
+    });
+
+    var promise1 = new Promise((resolve, reject) => {
+        let retryTimes = 0;
+        let timer;
+        if (!label)
+            timer = setInterval(function () {
+                if (retryTimes > config().maxRetryTimes)
+                    return reject('Database not available now.');
+                console.log('Waiting for database. Retry 200ms later.');
+                if (label) {
+                    exec1(resolve, reject);
+                    clearInterval(timer);
+                }
+            }, 200);
+        else exec1(resolve, reject)
+    });
+
+    return Promise.all([promise, promise1]).then(posts => {
+        // Promise.resolve()
+        return {'data':{'periods':posts[0],'labels':posts[1]}};
+    }).catch(function (reason) {
+        // ...
+    });
+
+    function exec(resolve, reject) {
+        period.find({}, { '_id': 0 }).map(sortPeriodName)
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                resolve(doc)
+            })
+    }
+
+    function exec1(resolve, reject) {
+        label.find({}, { '_id': 0 }).map(item => item["label_name"])
+            .toArray(async (error, doc) => {
+                if (error) reject(error);
+                resolve(doc)
+            })
+    }
+}
+
+
 // 查询所有的标签
 function getLabels() {
     return new Promise((resolve, reject) => {
@@ -154,7 +214,7 @@ function getLabels() {
                 if (retryTimes > config().maxRetryTimes)
                     return reject('Database not available now.');
                 console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
+                if (label) {
                     exec(resolve, reject);
                     clearInterval(timer);
                 }
@@ -183,7 +243,7 @@ function getCols(p) {
                 if (retryTimes > config().maxRetryTimes)
                     return reject('Database not available now.');
                 console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
+                if (col) {
                     exec(resolve, reject);
                     clearInterval(timer);
                 }
@@ -203,7 +263,7 @@ function getCols(p) {
                     resolve(handlePage(doc, p));
                 })
         } else {
-            col_id = parseInt(p);
+            col_id = parseInt(p.period);
             col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
@@ -218,12 +278,12 @@ function getLabelCols(p) {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
-        if (!single)
+        if (!col)
             timer = setInterval(function () {
                 if (retryTimes > config().maxRetryTimes)
                     return reject('Database not available now.');
                 console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
+                if (col) {
                     exec(resolve, reject);
                     clearInterval(timer);
                 }
@@ -273,7 +333,7 @@ function getHomeCols(p) {
         else exec1(resolve, reject)
     });
 
-    var promise3 = new Promise((resolve, reject) => {
+    var promise2 = new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
         if (!col)
@@ -289,7 +349,7 @@ function getHomeCols(p) {
         else exec2(resolve, reject)
     });
 
-    return Promise.all([promise, promise1, promise3]).then(posts => {
+    return Promise.all([promise, promise1, promise2]).then(posts => {
         // Promise.resolve()
         return {'data':{'r':posts[0],'e':posts[1],'n':posts[2]}};
     }).catch(function (reason) {
@@ -341,12 +401,12 @@ function getLatestCols() {
     return new Promise((resolve, reject) => {
         let retryTimes = 0;
         let timer;
-        if (!single)
+        if (!col)
             timer = setInterval(function () {
                 if (retryTimes > config().maxRetryTimes)
                     return reject('Database not available now.');
                 console.log('Waiting for database. Retry 200ms later.');
-                if (single) {
+                if (col) {
                     exec(resolve, reject);
                     clearInterval(timer);
                 }

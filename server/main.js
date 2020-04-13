@@ -57,6 +57,11 @@ router.post('/labels', async ctx => {
     ctx.body = JSON.stringify(data || 'error');
 })
 
+router.post('/periodsLabels', async ctx => {
+    const data = await db.period.getPeriodsLabels();
+    ctx.body = JSON.stringify(data || 'error');
+})
+
 // 分页 page  0开始
 // pageSize  默认 10
 // 获取期刊里面所有专辑
