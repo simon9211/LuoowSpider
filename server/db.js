@@ -131,19 +131,12 @@ function getPeriods() {
     });
 
     function exec(resolve, reject) {
-        period.find({}, { '_id': 0 }).map(sortPeriodName)
+        period.find({period_name: /^vol./}, { '_id': 0 }).map(item => item["period_name"])
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
             })
     }
-}
-
-function sortPeriodName(item) {
-    if (item['period_name'] == '音乐电台' || item['period_name'] == '其他') {
-        return null;
-    }
-    return item['period_name'];
 }
 
 function getPeriodsAndLabels() {
@@ -187,7 +180,7 @@ function getPeriodsAndLabels() {
     });
 
     function exec(resolve, reject) {
-        period.find({}, { '_id': 0 }).map(sortPeriodName)
+        period.find({period_name: /^vol./}, { '_id': 0 }).map(item => item["period_name"])
             .toArray(async (error, doc) => {
                 if (error) reject(error);
                 resolve(doc)
@@ -263,8 +256,10 @@ function getCols(p) {
                     resolve(handlePage(doc, p));
                 })
         } else {
-            col_id = parseInt(p.period);
-            col.find({ col_id: { '$gte': col_id, '$lte': col_id + 99 } }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
+            // "startId":1
+            // "endId": 10
+            let startId = parseInt(p.startId), endId = parseInt(p.endId);
+            col.find({ col_id: { '$gte': startId, '$lte': endId } }, { '_id': 0, 'col_id': 0 }).sort({ href: 1, _id: -1 })
                 .toArray(async (error, doc) => {
                     if (error) reject(error);
                     resolve(handlePage(doc, p));

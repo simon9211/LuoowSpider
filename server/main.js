@@ -66,6 +66,8 @@ router.post('/periodsLabels', async ctx => {
 // pageSize  默认 10
 // 获取期刊里面所有专辑
 // "period":"r",
+// "startId":1
+// "endId": 10
 // "page":1,
 // "pageSize": 3
 router.post('/col/period', async ctx => {
