@@ -8,6 +8,7 @@
     "mongodb": "^2.2.28",
     "node-fs-extra": "^0.8.2"
   },
+  "bin": "main.js",
   "config": {
     "port": 8080,
     "latestVol": 933,
