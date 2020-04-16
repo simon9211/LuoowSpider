@@ -38,7 +38,6 @@
   "author": "Hu",
   "protocol": "inspector",
   "scripts": {
-    "spider": "source ../venv/bin/activate && python3 ../task.py",
     "start": "node --harmony-async-await main.js"
   }
 }
