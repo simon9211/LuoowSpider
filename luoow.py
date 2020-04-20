@@ -11,7 +11,7 @@ import pymongo
 import ssl
 
 # import db
-from spiders import db
+from spiders import luoow_db
 from spiders import lib
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -148,14 +148,13 @@ def get_col_detail(item):
     scr = bsObj.find('body').findAll('script')
     # res = re.split(r'[\[\]]+', scr[-5].get_text())
     # dic_str = '{' + '"data":[' + res[1] + ']}'
-
     res = get_singles_json(scr[-5].get_text())
     dic_str = '{' + '"data":' + res + '}'
     # print(dic_str)
     dic = eval(dic_str)
     player_list = dic['data']
 
-    new_col = db.add_col(title=item['title'], href=item['href'], cover_min=item['cover_min'], cover=cover, desc=str(desc),
+    new_col = luoow_db.add_col(title=item['title'], href=item['href'], cover_min=item['cover_min'], cover=cover, desc=str(desc),
                          tags=tags, player_list=player_list, col_id=item['col_id'])
     if new_col:
         # 插入成功
@@ -175,7 +174,7 @@ def save_periods_mongo(periods):
     for i in range(0, int(len(periods) / 2)):
         # 插入mongo
         # vol_db.save({'vol': vols[i], "_id": i}, )
-        new_period = db.add_period(period_name=periods[i])
+        new_period = luoow_db.add_period(period_name=periods[i])
         if new_period:
             # 插入成功
             print('new_period 插入成功')
@@ -187,7 +186,7 @@ def save_labels_mongo(labels):
     for label in labels:
         # 插入mongo
         # tag_db.insert({'tag': tag})
-        new_label = db.add_label(label_name=label)
+        new_label = luoow_db.add_label(label_name=label)
         if new_label:
             # 插入成功
             print('new_label 插入成功')
@@ -199,7 +198,7 @@ def save_cols_mongo(cols):
     for col in cols:
         # col['_id'] = hash(col['title'])
         # col_db.save(col)
-        new_col = db.add_col(title=col['title'], href=col['href'], cover_min=col['cover_min'], cover='', desc='',
+        new_col = luoow_db.add_col(title=col['title'], href=col['href'], cover_min=col['cover_min'], cover='', desc='',
                              tags=[], player_list=[])
         if new_col:
             # 插入成功
@@ -212,9 +211,11 @@ get_home_page()
 
 
 def get_singles_json(singles_str):
+    # print('singles_str:' + singles_str)
     beg = singles_str.index('[')
     end = singles_str.rindex(']')
     if beg < end:
-        return singles_str[beg:end+1]
-
-    return ''
+        s = singles_str[beg:end + 1]
+        print('sssss:' + s)
+        return s
+    return '[]'
