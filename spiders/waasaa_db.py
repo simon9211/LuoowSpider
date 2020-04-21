@@ -4,16 +4,6 @@ import mongoengine as db
 
 db.connect('waasaa')
 
-class Single(db.Document):
-    def __init__(self, *args, **kwargs):
-        super(Single, self).__init__(*args, **kwargs)
-
-    src = db.StringField(required=True, unique=True, sparse=True)
-    href = db.StringField(required=True,)
-    author = db.StringField(required=True)
-    name = db.StringField(required=True)
-    cover = db.StringField(required=True)
-
 
 class Log(db.Document):
     def __init__(self):
@@ -24,51 +14,19 @@ class Log(db.Document):
     api = db.StringField(required=True)
 
 
-class Period(db.Document):
-    def __init__(self, *args, **kwargs):
-        super(Period, self).__init__(*args, **kwargs)
-
-    period_name = db.StringField(required=True, unique=True)
-
-
-def add_period(period_name):
-    if Period.objects(period_name=period_name).__len__() == 0:
-        new_period = Period(period_name=period_name)
-        new_period.save()
-        return True
-    return False
-
-
-class Label(db.Document):
-    def __init__(self, *args, **kwargs):
-        super(Label, self).__init__(*args, **kwargs)
-
-    label_name = db.StringField(required=True, unique=True)
-
-
-def add_label(label_name):
-    if Label.objects(label_name=label_name).__len__() == 0:
-        new_label = Label(label_name=label_name)
-        new_label.save()
-        return True
-    return False
-
-
 class Col(db.Document):
     def __init__(self, *args, **kwargs):
         super(Col, self).__init__(*args, **kwargs)
 
-    title = db.StringField(required=True, unique=True, sparse=True)
     href = db.StringField(required=True, unique=True, sparse=True)
-    col_id = db.IntField(required=True, unique=False)
-    cover_min = db.StringField(required=True, unique=True, sparse=True)
-    cover = db.StringField(required=True, unique=True, sparse=True)
+    title = db.StringField(required=True)
+    date = db.StringField(required=True, )
+    img = db.StringField(required=True)
     desc = db.StringField(required=True)
-    tags = db.ListField()
-    # player_list = db.ListField(required=False)
+    page_type = db.IntField(required=True)
 
 
-def add_col(title, href, cover_min, cover, desc, tags, player_list, col_id):
+def add_col(href, title, date, img, desc, page_type, player_list):
 
     t = threading.Thread(target=add_singles, args=(player_list, href))
     t.start()
@@ -76,7 +34,7 @@ def add_col(title, href, cover_min, cover, desc, tags, player_list, col_id):
     # add_singles(player_list, href)
 
     if Col.objects(href=href).__len__() == 0:
-        new_col = Col(title=title, href=href, cover_min=cover_min, cover=cover, desc=desc, tags=tags, col_id=col_id)
+        new_col = Col(title=title, href=href, date=date, img=img, desc=desc, page_type=page_type)
         new_col.save()
         return True
     return False
@@ -85,24 +43,41 @@ def add_col(title, href, cover_min, cover, desc, tags, player_list, col_id):
 lock = threading.Lock()
 
 
+class Single(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Single, self).__init__(*args, **kwargs)
+
+    src = db.StringField(required=True, unique=True, sparse=True)
+    title = db.StringField(required=False)
+    type = db.StringField(required=False)
+    caption = db.StringField(required=False)
+    description = db.StringField(required=False)
+    metas = db.StringField(required=False)
+
+    href = db.StringField(required=True)
+    page_type = db.IntField(required=True)
+
+
 def add_singles(player_list, href):
     for single in player_list:
-        # href, src, author, name, cover
         # lock.acquire()
-        add_single(src=single['src'], author=single['author'], name=single['name'], href=href, cover=single['cover'])
+        add_single(src=single['src'], title=single['title'], type=single['type'], caption=single['caption'], description=single['description'], metas=str(single['meta']), page_type=single['page_type'], href=href,)
         # lock.release()
 
 
-def add_single(href, src, author, name, cover):
+def add_single(src, title, type, caption, description, metas, page_type, href):
     single = Single.objects(src=src)
     print('llllllllllll' + str(len(single)))
     if len(single) == 0:
         new_single = Single(
             src=src,
+            title=title,
+            type=type,
+            caption=caption,
+            description=description,
+            metas=metas,
+            page_type=page_type,
             href=href,
-            author=author,
-            name=name,
-            cover=cover
         )
         new_single.save()
         return True
@@ -115,3 +90,37 @@ def add_single(href, src, author, name, cover):
         #     Single.objects(src=src).update(href=h + [href])
 
     return False
+
+
+class Daily(db.Document):
+    def __init__(self, *args, **kwargs):
+        super(Daily, self).__init__(*args, **kwargs)
+    did = db.IntField(required=True,)
+    year = db.StringField(required=True)
+    month = db.StringField(required=True)
+    day = title = db.StringField(required=True)
+    title = db.StringField(required=True)
+    artist = db.StringField(required=True)
+    aword = db.StringField(required=True)
+    mp3 = db.StringField(required=True, unique=True)
+    favs = db.IntField(required=True)
+    likes = db.IntField(required=True)
+    page = db.StringField(required=True)
+    thumb = db.StringField(required=True)
+    poster = db.StringField(required=True)
+    author = db.StringField(required=True)
+    author_link = db.StringField(required=True)
+
+
+def add_daily(did, year, month, day, title, artist, aword, mp3, favs, likes, page, thumb, poster, author, author_link):
+    if Daily.objects(did=did).__len__() == 0:
+        new_col = Daily(did=did, year=year, month=month, day=day, title=title, artist=artist, aword=aword, mp3=mp3, favs=favs, likes=likes, page=page, thumb=thumb, poster=poster, author=author, author_link=author_link)
+        new_col.save()
+        return True
+    return False
+
+
+def add_dailies(l):
+    for i in l:
+        add_daily(**i)
+

@@ -24,31 +24,38 @@ lock = threading.Lock()
 categories = [
     {
         'category': 'word',
-        'pages': 0
+        'pages': 0,
+        'pageType': 0
     },
     {
         'category': 'sy',
-        'pages': 0
+        'pages': 0,
+        'pageType': 1
     },
     {
         'category': 'qikan',
-        'pages': 0
+        'pages': 0,
+        'pageType': 2
     },
     {
         'category': 'xc',
-        'pages': 0
+        'pages': 0,
+        'pageType': 3
     },
     # {
     #     'category': 'daily',
-    #     'pages': 0
+    #     'pages': 0,
+    #     'pageType': 4
     # },
     {
         'category': 'luoo',
-        'pages': 0
+        'pages': 0,
+        'pageType': 5
     },
     {
         'category': 'b-b',
-        'pages': 0
+        'pages': 0,
+        'pageType': 6
     },
     ]
 
@@ -65,21 +72,26 @@ class pageType():
 
 # 获取所有的标签的页数
 def get_page_count():
-    # for category in categories:
-    #     url = 'https://www.waasaa.com/category/' + category['category']
-    #     bsObj = lib.load_page(url)
-    #     pages = bsObj.findAll("a", {"class": "page-numbers"})
-    #     if len(pages) > 0:
-    #         page_count = pages[-2].get_text()
-    #         print(pages[-2].get_text())
-    #         category['pages'] = page_count
-    #
-    # print(categories)
+    for category in categories:
+        url = 'https://www.waasaa.com/category/' + category['category']
+        bsObj = lib.load_page(url)
+        pages = bsObj.findAll("a", {"class": "page-numbers"})
+        if len(pages) > 0:
+            page_count = pages[-2].get_text()
+            print(pages[-2].get_text())
+            category['pages'] = page_count
+        else:
+            category['pages'] = 1
 
-    get_list_page(categories[2]['category'] + '/page/1')
+        for page in range(1, int(category['pages']) + 1):
+            t_period = threading.Thread(target=get_list_page, args=(category['category'] + '/page/{}'.format(page), category['pageType']))
+            t_period.start()
+        # get_list_page(category['category'] + '/page/1', category['pageType'])
+
+    # get_list_page(categories[1]['category'] + '/page/1', categories[1]['pageType'])
 
 
-def get_list_page(params):
+def get_list_page(params, page_type):
     url = 'https://www.waasaa.com/category/' + params
     bs_obj = lib.load_page(url)
     # 根据css样式表查找
@@ -96,8 +108,8 @@ def get_list_page(params):
     first_href = first_item.get('href')
     first_img = first_item.get('style').split("'")[1]
     first_date = first_item.find('div', {'class': 'blog-date'}).get_text()
-    print(first_title + ' href:' + ' date: ' + first_date + first_href + ' img: ' + first_img)
-
+    print(first_title + ' date: ' + first_date + ' href: ' + first_href + ' img: ' + first_img)
+    items.append({'title': first_title, 'href': first_href, 'img': first_img, 'date': first_date, 'page_type': page_type})
     item_divs = container_div.findAll('div', {'class': 'blog-post-item'})
     for item in item_divs:
         t = item.find('a', {'class': 'blog-post-image-link-block medium w-inline-block'})
@@ -105,50 +117,116 @@ def get_list_page(params):
         href = t.get('href')
         img = t.get('style').split("'")[1]
         date = t.find('div', {'class': 'blog-date small'}).get_text()
+        items.append({'title': title, 'href': href, 'img': img, 'date': date, 'page_type': page_type})
         print(title + ' date: ' + date + ' href: ' + href + ' img: ' + img)
+
+    # for item in items:
+    #     t_period = threading.Thread(target=get_detail_page, args=(item, page_type))
+    #     t_period.start()
+        # get_detail_page(item, page_type)
+
+    get_detail_page(items)
 
 
 # 获取详情
-def get_detail_page(url, type):
-    bs_obj = lib.load_page(url)
+def get_detail_page(items):
+    while items:
+        # 加锁
+        lock.acquire()
+        # 取出第一个元素
+        item = items[0]
+        # 将取出的元素从列表中删除，避免重复加载
+        del items[0]
+        # 释放锁
+        lock.release()
+        page_type = item['page_type']
+        bs_obj = lib.load_page(item['href'])
+        # bs_obj = lib.load_page(item)
+        if page_type == pageType.Word:
+            # 文字
+            # 文字获取音频
+            container_div = bs_obj.find('div', {'class': 'white-content-block'})
+            img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
+            div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
+            div_ps = div_rich_text_div.findAll('p')
+            desc = ''
+            for p in div_ps:
+                desc = desc + str(p)
+            audio_url = container_div.find('source', {'type': 'audio/mpeg'}).get('src')
+            item['desc'] = desc
+            # src=single['src'], title=single['title'], type=single['type'], caption=single['caption'], description=single['description'], meta=single['meta'], page_type=single['page_type']
+            playlist = [
+                {
+                    'src': audio_url,
+                    'title': '',
+                    'type': 'audio\\/mpeg',
+                    'caption': '',
+                    'description': '',
+                    'meta': '',
+                    'page_type': page_type
+                }
+            ]
+            waasaa_db.add_col(href=item['href'], title=item['title'], date=item['date'], img=item['img'], desc=item['desc'], page_type=page_type, player_list=playlist)
+            print('img: ' + img + ' audio_url: ' + audio_url + 'div_p: ' + desc)
+        elif page_type in [pageType.Voice, pageType.Period, pageType.Luoo, pageType.Bb]:
+            # 声音 期刊 回落 李志
+            container_div = bs_obj.find('div', {'class': 'white-content-block'})
+            img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
+            div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
+            div_ps = div_rich_text_div.findAll('p')
+            desc = ''
+            for p in div_ps:
+                desc = desc + str(p)
+            # 声音 期刊 获取播放列表
+            play_list_div = container_div.find('div', {'class': 'wp-playlist wp-audio-playlist wp-playlist-light'})
+            play_list_str, play_list_dic, playlist = '', {}, []
+            if play_list_div is not None:
+                play_list_str = play_list_div.find('script', {'class': 'wp-playlist-script'}).get_text()
+                play_list_str = play_list_str.replace('true', "'true'")
+                play_list_dic = eval(play_list_str)
+                for i in play_list_dic['tracks']:
+                    i['page_type'] = page_type
+                    playlist.append(i)
+                    print(i)
+            else:
+                audio_url = container_div.find('source', {'type': 'audio/mpeg'}).get('src')
+                playlist.append({
+                    'src': audio_url,
+                    'title': '',
+                    'type': 'audio\\/mpeg',
+                    'caption': '',
+                    'description': '',
+                    'meta': '',
+                    'page_type': page_type
+                })
+            print('img: ' + img + ' div_p: ' + desc)
 
-    if type == pageType.Word:
-        # 文字
-        # 文字获取音频
-        container_div = bs_obj.find('div', {'class': 'white-content-block'})
-        img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
-        div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
-        div_ps = div_rich_text_div.findAll('p')
-        s = ''
-        for p in div_ps:
-            s = s + str(p)
-        audio_url = container_div.find('source', {'type': 'audio/mpeg'}).get('src')
-        print('img: ' + img + ' audio_url: ' + audio_url + 'div_p: ' + s)
-    elif type in [pageType.Voice, pageType.Period, pageType.Luoo, pageType.Bb]:
-        # 声音 期刊 回落 李志
-        container_div = bs_obj.find('div', {'class': 'white-content-block'})
-        img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
-        div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
-        div_ps = div_rich_text_div.findAll('p')
-        s = ''
-        for p in div_ps:
-            s = s + str(p)
-        # 声音 期刊 获取播放列表
-        play_list_div = container_div.find('div', {'class': 'wp-playlist wp-audio-playlist wp-playlist-light'})
-        play_list_str = play_list_div.find('script', {'class': 'wp-playlist-script'}).get_text()
-        play_list_str = play_list_str.replace('true', "'true'")
-        play_list = eval(play_list_str)
-        print('img: ' + img + ' div_p: ' + s)
-        for i in play_list['tracks']:
-            print(i)
-    elif type == pageType.Live:
-        # 现场
-        container_div = bs_obj.find('div', {'class': 'white-content-block'})
-        img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
-        div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
-        video_url = div_rich_text_div.find('video').get('src')
-        print('img: ' + img + ' video_url: ' + video_url)
+            item['desc'] = desc
+            # src=single['src'], title=single['title'], type=single['type'], caption=single['caption'], description=single['description'], meta=single['meta'], page_type=single['page_type']
 
+            waasaa_db.add_col(href=item['href'], title=item['title'], date=item['date'], img=item['img'], desc=item['desc'], page_type=page_type,player_list=playlist)
+        elif page_type == pageType.Live:
+            # 现场
+            container_div = bs_obj.find('div', {'class': 'white-content-block'})
+            img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
+            div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
+            video_url = div_rich_text_div.find('video').get('src')
+            item['desc'] = ''
+            # src=single['src'], title=single['title'], type=single['type'], caption=single['caption'], description=single['description'], meta=single['meta'], page_type=single['page_type']
+            playlist = [
+                {
+                    'src': video_url,
+                    'title': '',
+                    'type': 'video\\/mpeg',
+                    'caption': '',
+                    'description': '',
+                    'meta': '',
+                    'page_type': page_type
+                }
+            ]
+            waasaa_db.add_col(href=item['href'], title=item['title'], date=item['date'], img=item['img'], desc=item['desc'], page_type=page_type,
+                              player_list=playlist)
+            print('img: ' + img + ' video_url: ' + video_url)
 
 
 def get_daily_playlist():
@@ -163,7 +241,11 @@ def get_daily_playlist():
     playlist = data['playlist']
     for play in playlist:
         print(str(play))
-
+        play['did'] = play['id']
+        del play['id']
+        waasaa_db.add_daily(**play)
+        # waasaa_db.add_daily(did=play['id'], year=play['year'], month=play['month'], day=play['day'], title=play['title'], artist=play['artist'], aword=play['aword'], mp3=play['mp3'], favs=play['favs'], likes=play['likes'], page=play['page'], thumb=play['thumb'], poster=play['poster'], author=play['author'], author_link=play['author_link'])
+    # waasaa_db.add_dailies(playlist)
 
 
 def get_col(cols):
@@ -326,22 +408,21 @@ def get_singles_json(singles_str):
 # get_page_count()
 # https://www.waasaa.com/52640.html # 文字
 # get_detail_page('https://www.waasaa.com/52640.html', pageType.Word)
-
-# https://www.waasaa.com/23188.html # 声音
+#
+# # https://www.waasaa.com/23188.html # 声音
 # get_detail_page('https://www.waasaa.com/23188.html', pageType.Voice)
-
-# https://www.waasaa.com/52668.html # 期刊
+#
+# # https://www.waasaa.com/52668.html # 期刊
 # get_detail_page('https://www.waasaa.com/52668.html', pageType.Period)
-
-# https://www.waasaa.com/52463.html # 现场
+#
+# # https://www.waasaa.com/52463.html # 现场
 # get_detail_page('https://www.waasaa.com/52463.html', pageType.Live)
-
-# https://www.waasaa.com/daily # 心情
-# get_detail_page('https://www.waasaa.com/daily', pageType.Daily)
-# get_daily_playlist()
-
-# https://waasaa.com/50900.html # 回落
+#
+# # https://www.waasaa.com/daily # 心情
+get_daily_playlist()
+#
+# # https://waasaa.com/50900.html # 回落
 # get_detail_page('https://waasaa.com/50900.html', pageType.Luoo)
-
-# https://waasaa.com/25057.html # 李志
-get_detail_page('https://waasaa.com/25057.html', pageType.Bb)
+#
+# # https://waasaa.com/25057.html # 李志
+# get_detail_page('https://waasaa.com/25057.html', pageType.Bb)
