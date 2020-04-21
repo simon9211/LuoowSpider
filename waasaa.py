@@ -11,6 +11,8 @@ import pymongo
 import ssl
 
 # import db
+import requests
+
 from spiders import waasaa_db
 from spiders import lib
 
@@ -36,10 +38,10 @@ categories = [
         'category': 'xc',
         'pages': 0
     },
-    {
-        'category': 'daily',
-        'pages': 0
-    },
+    # {
+    #     'category': 'daily',
+    #     'pages': 0
+    # },
     {
         'category': 'luoo',
         'pages': 0
@@ -122,8 +124,8 @@ def get_detail_page(url, type):
             s = s + str(p)
         audio_url = container_div.find('source', {'type': 'audio/mpeg'}).get('src')
         print('img: ' + img + ' audio_url: ' + audio_url + 'div_p: ' + s)
-    elif type == pageType.Voice or type == pageType.Period:
-        # 声音 期刊
+    elif type in [pageType.Voice, pageType.Period, pageType.Luoo, pageType.Bb]:
+        # 声音 期刊 回落 李志
         container_div = bs_obj.find('div', {'class': 'white-content-block'})
         img = container_div.find('div', {'class': 'blog-post-image-block'}).get('style').split("'")[1]
         div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
@@ -146,18 +148,22 @@ def get_detail_page(url, type):
         div_rich_text_div = container_div.find('div', {'class': 'rich-text-block w-richtext'})
         video_url = div_rich_text_div.find('video').get('src')
         print('img: ' + img + ' video_url: ' + video_url)
-    elif type == pageType.Daily:
-        # 心情
-        play_list_div_container = bs_obj.find('div', {'id': 'playlist'})#.findAll('div', {'class': 'item'})
-        play_list_divs = play_list_div_container.findAll('div', {'class': 'item'})
-        print(str(play_list_div_container))
-        for item in play_list_divs:
-            date = item.find('span', {'class': 'day'}).get_text()
-            title = item.find('strong', {'class': 'title'}).get_text()
-            artist = item.find('span', {'class': 'artist'}).get_text()
-            img = item.find('img', {'class': 'thumb'}).get('src')
-            play_url = img.split('-mp3-')[0]
-            print('img: ' + img + ' date: ' + date + ' title: ' + title + ' artist: ' + artist + ' play_url: ' + play_url)
+
+
+
+def get_daily_playlist():
+    url = 'https://www.waasaa.com/wp-admin/admin-ajax.php?action=get_daily_playlist'
+    response = requests.get(url)
+    html = response.text
+    if html.startswith(u'\ufeff'):
+        html = html.encode('utf8')[3:].decode('utf8')
+    # 删除无用字符
+    # html = html.replace('fetchJSON_comment98vv53282(', '').replace(');', '')
+    data = json.loads(html)
+    playlist = data['playlist']
+    for play in playlist:
+        print(str(play))
+
 
 
 def get_col(cols):
@@ -331,5 +337,11 @@ def get_singles_json(singles_str):
 # get_detail_page('https://www.waasaa.com/52463.html', pageType.Live)
 
 # https://www.waasaa.com/daily # 心情
-get_detail_page('https://www.waasaa.com/daily', pageType.Daily)
+# get_detail_page('https://www.waasaa.com/daily', pageType.Daily)
+# get_daily_playlist()
 
+# https://waasaa.com/50900.html # 回落
+# get_detail_page('https://waasaa.com/50900.html', pageType.Luoo)
+
+# https://waasaa.com/25057.html # 李志
+get_detail_page('https://waasaa.com/25057.html', pageType.Bb)
